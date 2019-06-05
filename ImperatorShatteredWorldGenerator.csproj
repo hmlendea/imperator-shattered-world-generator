@@ -6,4 +6,9 @@
     <RootNamespace>ImperatorShatteredWorldGenerator</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="NuciCLI" Version="1.3.0.1" />
+    <PackageReference Include="NuciDAL" Version="1.1.0.2" />
+  </ItemGroup>
+
 </Project>
