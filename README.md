@@ -1,2 +1,5 @@
-# imperator-shattered-world-generator
-Generates a Shattered World mod for Imperator Rome
+[![Build Status](https://travis-ci.com/hmlendea/imperator-shattered-world-generator.svg?branch=master)](https://travis-ci.com/hmlendea/imperator-shattered-world-generator)
+
+# About
+
+Tool for generating Shattered World mods for Imperator: Rome
