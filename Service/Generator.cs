@@ -28,6 +28,7 @@ namespace ImperatorShatteredWorldGenerator.Service
         IList<string> religionIds;
         IList<string> cultureIds;
         IList<string> governmentIds;
+        IList<string> diplomaticStanceIds;
 
         public Generator(IEntitiesLoader entitiesLoader)
         {
@@ -91,8 +92,8 @@ namespace ImperatorShatteredWorldGenerator.Service
 
                 string countrySetupDefinition =
                     $"{country.Id} = {{" + Environment.NewLine +
-                    $"    government = {country.GovernmentId}" + Environment.NewLine + // TODO: Hardcoded
-                    $"    diplomatic_stance = warmongering_stance" + Environment.NewLine + // TODO: Hardcoded
+                    $"    government = {country.GovernmentId}" + Environment.NewLine +
+                    $"    diplomatic_stance = {country.DiplomaticStanceId}" + Environment.NewLine +
                     $"    primary_culture = {country.CultureId}" + Environment.NewLine +
                     $"    religion = {country.ReligionId}" + Environment.NewLine +
                     $"    capital = {country.CapitalId}" + Environment.NewLine +
@@ -124,6 +125,7 @@ namespace ImperatorShatteredWorldGenerator.Service
             religionIds = entitiesLoader.LoadReligionIds().ToList();
             cultureIds = entitiesLoader.LoadCultureIds().ToList();
             governmentIds = entitiesLoader.LoadGovernmentIds().ToList();
+            diplomaticStanceIds = entitiesLoader.LoadDiplomaticStanceIds().ToList();
         }
 
         void ProcessCities()
@@ -154,6 +156,7 @@ namespace ImperatorShatteredWorldGenerator.Service
                 country.ReligionId = city.ReligionId;
 
                 country.GovernmentId = governmentIds.GetRandomElement();
+                country.DiplomaticStanceId = diplomaticStanceIds.GetRandomElement();
                 country.CapitalId = city.Id;
 
                 country.ColourRed = random.Next(0, 256);

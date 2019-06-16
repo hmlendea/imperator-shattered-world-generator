@@ -107,5 +107,34 @@ namespace ImperatorShatteredWorldGenerator.Service
 
             return governmentIds;
         }
+
+        public IEnumerable<string> LoadDiplomaticStanceIds()
+        {
+            const string DiplomaticStanceIdRegexPattern = "^([^#\\s]*)\\s*=\\s*{";
+
+            IList<string> diplomaticStanceIds = new List<string>();
+
+            string diplomaticStancesDirPath = Path.Combine(gameDirectory, "game", "common", "diplomatic_stances");
+            DirectoryInfo dir = new DirectoryInfo(diplomaticStancesDirPath);
+
+            foreach (FileInfo file in dir.GetFiles("*.txt"))
+            {
+                IEnumerable<string> lines = File.ReadAllLines(file.FullName);
+
+                foreach (string line in lines)
+                {
+                    Match match = Regex.Match(line, DiplomaticStanceIdRegexPattern);
+
+                    if (!match.Success)
+                    {
+                        continue;
+                    }
+
+                    diplomaticStanceIds.Add(match.Groups[1].Value);
+                }
+            }
+
+            return diplomaticStanceIds;
+        }
     }
 }
