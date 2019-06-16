@@ -20,10 +20,27 @@ namespace ImperatorShatteredWorldGenerator
             string imperatorDirectoryPath = CliArgumentsReader.GetOptionValue(args, ImperatorDirectoryPathOptions);
             string outputModName = CliArgumentsReader.GetOptionValue(args, OutputModNameOptions);
 
-            string provinceSetupFilePath = Path.Combine(imperatorDirectoryPath, "game", "common", "province_setup.csv");
-            CsvRepository<CityEntity> cityRepository = new CsvRepository<CityEntity>(provinceSetupFilePath);
+            string vanillaProvinceSetupFilePath = Path.Combine(imperatorDirectoryPath, "game", "common", "province_setup.csv");
 
-            Generator generator = new Generator(cityRepository);
+            string modCommonDirectory = Path.Combine(outputModName, "common");
+            string modProvinceSetupFilePath = Path.Combine(modCommonDirectory, "province_setup.csv");
+
+            if (!Directory.Exists(modCommonDirectory))
+            {
+                Directory.CreateDirectory(modCommonDirectory);
+            }
+
+            if (!File.Exists(modProvinceSetupFilePath))
+            {
+                File.Create(modProvinceSetupFilePath);
+            }
+
+            CsvRepository<CityEntity> vanillaCityRepository = new CsvRepository<CityEntity>(vanillaProvinceSetupFilePath);
+            CsvRepository<CityEntity> modCityRepository = new CsvRepository<CityEntity>(modProvinceSetupFilePath);
+
+            Generator generator = new Generator(vanillaCityRepository, modCityRepository);
+
+            generator.Generate();
         }
     }
 }
