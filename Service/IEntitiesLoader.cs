@@ -9,5 +9,7 @@ namespace ImperatorShatteredWorldGenerator.Service
         IEnumerable<City> LoadCities();
 
         IEnumerable<string> LoadReligionIds();
+
+        IEnumerable<string> LoadCultureIds();
     }
 }
