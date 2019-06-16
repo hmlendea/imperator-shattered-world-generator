@@ -5,8 +5,8 @@ using System.Text.RegularExpressions;
 using NuciDAL.Repositories;
 
 using ImperatorShatteredWorldGenerator.DataAccess.DataObjects;
-using ImperatorShatteredWorldGenerator.Mapping;
-using ImperatorShatteredWorldGenerator.Models;
+using ImperatorShatteredWorldGenerator.Service.Mapping;
+using ImperatorShatteredWorldGenerator.Service.Models;
 
 namespace ImperatorShatteredWorldGenerator.Service
 {
@@ -53,7 +53,7 @@ namespace ImperatorShatteredWorldGenerator.Service
         public IEnumerable<string> LoadCultureIds()
         {
             const string CultureIdRegexPattern = "^\\t\\t([^\\s]*)\\s*=\\s*{\\s*}";
-            
+
             IList<string> cultureIds = new List<string>();
 
             string culturesDirPath = Path.Combine(gameDirectory, "game", "common", "cultures");
