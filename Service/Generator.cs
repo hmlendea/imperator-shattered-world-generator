@@ -14,7 +14,8 @@ namespace ImperatorShatteredWorldGenerator.Service
 {
     public sealed class Generator
     {
-        const int CityPopulationCount = 4;
+        const int CityPopulationMin = 4;
+        const int CityPopulationMax = 8;
         
         readonly IEntitiesLoader entitiesLoader;
 
@@ -79,7 +80,14 @@ namespace ImperatorShatteredWorldGenerator.Service
 
         void SetCityPopulation(City city)
         {
-            if (city.TotalPopulation <= CityPopulationCount)
+            if (city.TotalPopulation == 0)
+            {
+                return;
+            }
+
+            int populationCount = random.Next(CityPopulationMin, CityPopulationMax + 1);
+
+            if (city.TotalPopulation == populationCount)
             {
                 return;
             }
@@ -89,7 +97,7 @@ namespace ImperatorShatteredWorldGenerator.Service
             city.TribesmenCount = 0;
             city.SlavesCount = 0;
 
-            for (int i = 0; i < CityPopulationCount; i++)
+            for (int i = 0; i < populationCount; i++)
             {
                 int randomPop = random.Next(0, 4);
 
