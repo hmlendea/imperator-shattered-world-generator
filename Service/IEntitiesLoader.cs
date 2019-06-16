@@ -11,5 +11,7 @@ namespace ImperatorShatteredWorldGenerator.Service
         IEnumerable<string> LoadReligionIds();
 
         IEnumerable<string> LoadCultureIds();
+
+        IEnumerable<string> LoadGovernmentIds();
     }
 }

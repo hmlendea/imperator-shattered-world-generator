@@ -14,11 +14,13 @@ namespace ImperatorShatteredWorldGenerator.Service.Models
 
         public int ColourBlue { get; set; }
 
-        public string CapitalId { get; set; }
-
         public string CultureId { get; set; }
 
         public string ReligionId { get; set; }
+
+        public string GovernmentId { get; set; }
+        
+        public string CapitalId { get; set; }
 
         public IEnumerable<string> ShipNames { get; set; }
 
