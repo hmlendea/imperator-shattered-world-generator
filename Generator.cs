@@ -1,68 +1,115 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 using NuciDAL.Repositories;
 
 using ImperatorShatteredWorldGenerator.DataAccess.DataObjects;
+using ImperatorShatteredWorldGenerator.Mapping;
+using ImperatorShatteredWorldGenerator.Models;
 
 namespace ImperatorShatteredWorldGenerator
 {
     public sealed class Generator
     {
+        const int CityPopulationCount = 4;
+
         readonly IRepository<CityEntity> vanillaCityRepository;
-        readonly IRepository<CityEntity> modCityRepository;
 
-        const int CityCitizensCount = 0;
-        const int CityFreemenCount = 0;
-        const int CityTribesmenCount = 3;
-        const int CitySlavesCount = 0;
+        readonly Random random;
+        
+        IList<City> cities;
 
-        public Generator(
-            IRepository<CityEntity> vanillaCityRepository,
-            IRepository<CityEntity> modCityRepository)
+        public Generator(IRepository<CityEntity> vanillaCityRepository)
         {
             this.vanillaCityRepository = vanillaCityRepository;
-            this.modCityRepository = modCityRepository;
+            
+            random = new Random();
+
+            LoadEntities();
         }
 
         public void Generate()
         {
             ProcessCities();
+        }
+
+        public void Save(string modDirectory)
+        {
+            string modCommonDirectory = Path.Combine(modDirectory, "common");
+            string modProvinceSetupFilePath = Path.Combine(modCommonDirectory, "province_setup.csv");
+
+            if (Directory.Exists(modDirectory))
+            {
+                Directory.Delete(modDirectory, true);
+            }
+            
+            Directory.CreateDirectory(modCommonDirectory);
+
+            IRepository<CityEntity> modCityRepository = new CsvRepository<CityEntity>(modProvinceSetupFilePath);
+
+            foreach (City city in cities)
+            {
+                modCityRepository.Add(city.ToDataObject());
+            }
 
             modCityRepository.ApplyChanges();
         }
 
+        void EnsureFileCompatibility(string filePath)
+        {
+            string content = File.ReadAllText(filePath);
+            content = content.Replace("\n", "\r\n");
+
+            File.WriteAllText(filePath, content);
+        }
+
+        void LoadEntities()
+        {
+            cities = vanillaCityRepository.GetAll().ToServiceModels().ToList();
+        }
+
         void ProcessCities()
         {
-            foreach (CityEntity city in vanillaCityRepository.GetAll())
+            foreach (City city in cities)
             {
-                Console.WriteLine(city.Id + " " + city.NameId);
                 SetCityPopulation(city);
-                modCityRepository.Add(city);
             }
         }
 
-        void SetCityPopulation(CityEntity city)
+        void SetCityPopulation(City city)
         {
-            if (city.CitizensCount > CityCitizensCount)
+            if (city.TotalPopulation <= CityPopulationCount)
             {
-                city.CitizensCount = CityCitizensCount;
+                return;
             }
 
-            if (city.FreemenCount > CityFreemenCount)
-            {
-                city.FreemenCount = CityFreemenCount;
-            }
+            city.CitizensCount = 0;
+            city.FreemenCount = 0;
+            city.TribesmenCount = 0;
+            city.SlavesCount = 0;
 
-            if (city.TribesmenCount > CityTribesmenCount)
+            for (int i = 0; i < CityPopulationCount; i++)
             {
-                city.TribesmenCount = CityTribesmenCount;
-            }
+                int randomPop = random.Next(0, 4);
 
-            if (city.SlavesCount > CitySlavesCount)
-            {
-                city.SlavesCount = CitySlavesCount;
+                if (randomPop == 0)
+                {
+                    city.SlavesCount += 1;
+                }
+                else if (randomPop == 1)
+                {
+                    city.TribesmenCount += 1;
+                }
+                else if (randomPop == 2)
+                {
+                    city.FreemenCount += 1;
+                }
+                else if (randomPop == 3)
+                {
+                    city.CitizensCount += 1;
+                }
             }
         }
     }
