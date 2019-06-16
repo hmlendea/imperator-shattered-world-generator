@@ -78,5 +78,34 @@ namespace ImperatorShatteredWorldGenerator.Service
 
             return cultureIds;
         }
+
+        public IEnumerable<string> LoadGovernmentIds()
+        {
+            const string GovernmentIdRegexPattern = "^([^#\\s]*)\\s*=\\s*{";
+
+            IList<string> governmentIds = new List<string>();
+
+            string governmentsDirPath = Path.Combine(gameDirectory, "game", "common", "governments");
+            DirectoryInfo dir = new DirectoryInfo(governmentsDirPath);
+
+            foreach (FileInfo file in dir.GetFiles("*.txt"))
+            {
+                IEnumerable<string> lines = File.ReadAllLines(file.FullName);
+
+                foreach (string line in lines)
+                {
+                    Match match = Regex.Match(line, GovernmentIdRegexPattern);
+
+                    if (!match.Success)
+                    {
+                        continue;
+                    }
+
+                    governmentIds.Add(match.Groups[1].Value);
+                }
+            }
+
+            return governmentIds;
+        }
     }
 }
