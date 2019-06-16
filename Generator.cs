@@ -23,6 +23,7 @@ namespace ImperatorShatteredWorldGenerator
 
         IList<City> cities;
         IList<string> religionIds;
+        IList<string> cultureIds;
 
         public Generator(IEntitiesLoader entitiesLoader, string modDirectory)
         {
@@ -72,6 +73,7 @@ namespace ImperatorShatteredWorldGenerator
         {
             cities = entitiesLoader.LoadCities().ToList();
             religionIds = entitiesLoader.LoadReligionIds().ToList();
+            cultureIds = entitiesLoader.LoadCultureIds().ToList();
         }
 
         void ProcessCities()
@@ -80,6 +82,7 @@ namespace ImperatorShatteredWorldGenerator
             {
                 SetCityPopulation(city);
                 city.ReligionId = religionIds.GetRandomElement();
+                city.CultureId = cultureIds.GetRandomElement();
             }
         }
 

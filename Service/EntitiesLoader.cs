@@ -46,8 +46,37 @@ namespace ImperatorShatteredWorldGenerator.Service
 
                 religionIds.Add(match.Groups[1].Value);
             }
-            
+
             return religionIds;
+        }
+
+        public IEnumerable<string> LoadCultureIds()
+        {
+            const string CultureIdRegexPattern = "^\\t\\t([^\\s]*)\\s*=\\s*{\\s*}";
+            
+            IList<string> cultureIds = new List<string>();
+
+            string culturesDirPath = Path.Combine(gameDirectory, "game", "common", "cultures");
+            DirectoryInfo dir = new DirectoryInfo(culturesDirPath);
+
+            foreach (FileInfo file in dir.GetFiles("*.txt"))
+            {
+                IEnumerable<string> lines = File.ReadAllLines(file.FullName);
+
+                foreach (string line in lines)
+                {
+                    Match match = Regex.Match(line, CultureIdRegexPattern);
+
+                    if (!match.Success)
+                    {
+                        continue;
+                    }
+
+                    cultureIds.Add(match.Groups[1].Value);
+                }
+            }
+
+            return cultureIds;
         }
     }
 }
