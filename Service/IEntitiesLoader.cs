@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-using ImperatorShatteredWorldGenerator.Models;
+using ImperatorShatteredWorldGenerator.Service.Models;
 
 namespace ImperatorShatteredWorldGenerator.Service
 {

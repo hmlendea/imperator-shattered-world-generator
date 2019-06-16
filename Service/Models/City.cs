@@ -1,4 +1,4 @@
-namespace ImperatorShatteredWorldGenerator.Models
+namespace ImperatorShatteredWorldGenerator.Service.Models
 {
     public sealed class City
     {

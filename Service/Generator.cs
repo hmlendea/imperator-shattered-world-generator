@@ -7,11 +7,10 @@ using NuciDAL.Repositories;
 using NuciExtensions;
 
 using ImperatorShatteredWorldGenerator.DataAccess.DataObjects;
-using ImperatorShatteredWorldGenerator.Mapping;
-using ImperatorShatteredWorldGenerator.Models;
-using ImperatorShatteredWorldGenerator.Service;
+using ImperatorShatteredWorldGenerator.Service.Mapping;
+using ImperatorShatteredWorldGenerator.Service.Models;
 
-namespace ImperatorShatteredWorldGenerator
+namespace ImperatorShatteredWorldGenerator.Service
 {
     public sealed class Generator
     {
@@ -59,14 +58,6 @@ namespace ImperatorShatteredWorldGenerator
             }
 
             modCityRepository.ApplyChanges();
-        }
-
-        void EnsureFileCompatibility(string filePath)
-        {
-            string content = File.ReadAllText(filePath);
-            content = content.Replace("\n", "\r\n");
-
-            File.WriteAllText(filePath, content);
         }
 
         void LoadEntities()

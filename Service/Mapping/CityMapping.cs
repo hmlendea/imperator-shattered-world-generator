@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using System.Linq;
 
 using ImperatorShatteredWorldGenerator.DataAccess.DataObjects;
-using ImperatorShatteredWorldGenerator.Models;
+using ImperatorShatteredWorldGenerator.Service.Models;
 
-namespace ImperatorShatteredWorldGenerator.Mapping
+namespace ImperatorShatteredWorldGenerator.Service.Mapping
 {
     static class CityMapping
     {
