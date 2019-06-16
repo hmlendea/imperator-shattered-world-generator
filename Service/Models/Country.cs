@@ -6,6 +6,8 @@ namespace ImperatorShatteredWorldGenerator.Service.Models
     {
         public string Id { get; set; }
 
+        public string Name { get; set; }
+
         public int ColourRed { get; set; }
 
         public int ColourGreen { get; set; }

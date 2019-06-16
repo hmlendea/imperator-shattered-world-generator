@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 using NuciDAL.Repositories;
 using NuciExtensions;
@@ -46,10 +47,12 @@ namespace ImperatorShatteredWorldGenerator.Service
         {
             string modCommonDirectory = Path.Combine(modDirectory, "common");
             string modCountriesDirectory = Path.Combine(modCommonDirectory, "countries");
+            string modLocalisationDirectory = Path.Combine(modDirectory, "localization", "english");
 
             string modProvinceSetupFilePath = Path.Combine(modCommonDirectory, "province_setup.csv");
             string countriesTxtPath = Path.Combine(modCommonDirectory, "countries.txt");
             string countriesSetupPath = Path.Combine(modCommonDirectory, "setup.txt");
+            string countriesLocalisationPath = Path.Combine(modLocalisationDirectory, $"countries_l_english.yml");
 
             string countriesTxtContent =
                 "REB = \"countries/rebels.txt\"" + Environment.NewLine +
@@ -57,14 +60,15 @@ namespace ImperatorShatteredWorldGenerator.Service
                 "BAR = \"countries/barbarians.txt\"" + Environment.NewLine +
                 "MER = \"countries/mercenaries.txt\"" + Environment.NewLine;
             string countriesSetupContent = "country = { countries = {" + Environment.NewLine;
+            string countriesLocalisationContent = "﻿l_english:" + Environment.NewLine;
 
             if (Directory.Exists(modDirectory))
             {
                 Directory.Delete(modDirectory, true);
             }
             
-            Directory.CreateDirectory(modCommonDirectory);
             Directory.CreateDirectory(modCountriesDirectory);
+            Directory.CreateDirectory(modLocalisationDirectory);
 
             IRepository<CityEntity> modCityRepository = new CsvRepository<CityEntity>(modProvinceSetupFilePath);
 
@@ -95,18 +99,24 @@ namespace ImperatorShatteredWorldGenerator.Service
                     $"    capital = {country.CapitalId}" + Environment.NewLine +
                     $"    own_control_core = {{ {country.CapitalId} }}" + Environment.NewLine +
                     $"}}" + Environment.NewLine;
+                
+                string countryLocalisationContent =
+                    $" {country.Id}:0 \"{country.Name}\"{Environment.NewLine}";
 
                 countriesTxtContent += countryTxtDefinition;
                 countriesSetupContent += countrySetupDefinition;
+                countriesLocalisationContent += countryLocalisationContent;
                 File.WriteAllText(countryFilePath, countryFileContent);
             }
 
             countriesSetupContent += "} }";
+            countriesLocalisationContent += Environment.NewLine;
 
             modCityRepository.ApplyChanges();
             
             File.WriteAllText(countriesTxtPath, countriesTxtContent);
             File.WriteAllText(countriesSetupPath, countriesSetupContent);
+            SaveUnicodeFile(countriesLocalisationPath, countriesLocalisationContent);
         }
 
         void LoadEntities()
@@ -132,12 +142,13 @@ namespace ImperatorShatteredWorldGenerator.Service
 
             IList<string> validCityIds = cities.Values.Where(x => x.TotalPopulation > 0).Select(x => x.Id).ToList();
 
-            for (int i = 0; i < 1900; i++)
+            for (int i = 0; i < 1250; i++)
             {
                 City city = cities[validCityIds.GetRandomElement()];
                 Country country = new Country();
 
                 country.Id = GenerateCountryId(city.NameId);
+                country.Name = city.NameId;
 
                 country.CapitalId = city.Id;
                 country.CultureId = city.CultureId;
@@ -183,7 +194,15 @@ namespace ImperatorShatteredWorldGenerator.Service
 
         void SetCityPopulation(City city)
         {
-            if (city.TotalPopulation == 0)
+            city.CitizensCount = 0;
+            city.FreemenCount = 0;
+            city.TribesmenCount = 0;
+            city.SlavesCount = 0;
+
+            if (string.IsNullOrWhiteSpace(city.TradeGoodId) ||
+                string.IsNullOrWhiteSpace(city.CultureId) ||
+                string.IsNullOrWhiteSpace(city.ReligionId) ||
+                string.IsNullOrWhiteSpace(city.NameId))
             {
                 return;
             }
@@ -220,6 +239,14 @@ namespace ImperatorShatteredWorldGenerator.Service
                 {
                     city.CitizensCount += 1;
                 }
+            }
+        }
+
+        void SaveUnicodeFile(string path, string content)
+        {
+            using (StreamWriter writer = new StreamWriter(path, false, Encoding.UTF8))
+            {
+                writer.Write(content.Substring(1));
             }
         }
     }
