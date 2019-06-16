@@ -21,11 +21,13 @@ namespace ImperatorShatteredWorldGenerator.Service
 
         readonly Random random;
 
-        IList<City> cities;
+        IDictionary<string, City> cities;
+        IList<Country> countries;
+
         IList<string> religionIds;
         IList<string> cultureIds;
 
-        public Generator(IEntitiesLoader entitiesLoader, string modDirectory)
+        public Generator(IEntitiesLoader entitiesLoader)
         {
             this.entitiesLoader = entitiesLoader;
 
@@ -37,12 +39,24 @@ namespace ImperatorShatteredWorldGenerator.Service
         public void Generate()
         {
             ProcessCities();
+            GenerateCountries();
         }
 
         public void Save(string modDirectory)
         {
             string modCommonDirectory = Path.Combine(modDirectory, "common");
+            string modCountriesDirectory = Path.Combine(modCommonDirectory, "countries");
+
             string modProvinceSetupFilePath = Path.Combine(modCommonDirectory, "province_setup.csv");
+            string countriesTxtPath = Path.Combine(modCommonDirectory, "countries.txt");
+            string countriesSetupPath = Path.Combine(modCommonDirectory, "setup.txt");
+
+            string countriesTxtContent =
+                "REB = \"countries/rebels.txt\"" + Environment.NewLine +
+                "PIR = \"countries/pirates.txt\"" + Environment.NewLine +
+                "BAR = \"countries/barbarians.txt\"" + Environment.NewLine +
+                "MER = \"countries/mercenaries.txt\"" + Environment.NewLine;
+            string countriesSetupContent = "country = { countries = {" + Environment.NewLine;
 
             if (Directory.Exists(modDirectory))
             {
@@ -50,32 +64,121 @@ namespace ImperatorShatteredWorldGenerator.Service
             }
             
             Directory.CreateDirectory(modCommonDirectory);
+            Directory.CreateDirectory(modCountriesDirectory);
 
             IRepository<CityEntity> modCityRepository = new CsvRepository<CityEntity>(modProvinceSetupFilePath);
 
-            foreach (City city in cities)
+            foreach (City city in cities.Values)
             {
                 modCityRepository.Add(city.ToDataObject());
             }
 
+            foreach (Country country in countries)
+            {
+                string countryFileName = $"{country.Id}.txt";
+                string countryFilePath = Path.Combine(modCountriesDirectory, countryFileName);
+
+                string countryTxtDefinition = $"{country.Id} = \"countries/{countryFileName}\"{Environment.NewLine}";
+
+                string countryFileContent =
+                    $"color = {{ {country.ColourRed} {country.ColourGreen} {country.ColourBlue} }}{Environment.NewLine}{Environment.NewLine}" +
+                    $"ship_names = {{{Environment.NewLine}" +
+                    $"    {string.Join(' ', country.ShipNames)}{Environment.NewLine}" +
+                    $"}}";
+
+                string countrySetupDefinition =
+                    $"{country.Id} = {{" + Environment.NewLine +
+                    $"    government = aristocratic_republic" + Environment.NewLine + // TODO: Hardcoded
+                    $"    diplomatic_stance = warmongering_stance" + Environment.NewLine + // TODO: Hardcoded
+                    $"    primary_culture = {country.CultureId}" + Environment.NewLine +
+                    $"    religion = {country.ReligionId}" + Environment.NewLine +
+                    $"    capital = {country.CapitalId}" + Environment.NewLine +
+                    $"    own_control_core = {{ {country.CapitalId} }}" + Environment.NewLine +
+                    $"}}" + Environment.NewLine;
+
+                countriesTxtContent += countryTxtDefinition;
+                countriesSetupContent += countrySetupDefinition;
+                File.WriteAllText(countryFilePath, countryFileContent);
+            }
+
+            countriesSetupContent += "} }";
+
             modCityRepository.ApplyChanges();
+            
+            File.WriteAllText(countriesTxtPath, countriesTxtContent);
+            File.WriteAllText(countriesSetupPath, countriesSetupContent);
         }
 
         void LoadEntities()
         {
-            cities = entitiesLoader.LoadCities().ToList();
+            cities = entitiesLoader.LoadCities().ToDictionary(x => x.Id, x => x);
             religionIds = entitiesLoader.LoadReligionIds().ToList();
             cultureIds = entitiesLoader.LoadCultureIds().ToList();
         }
 
         void ProcessCities()
         {
-            foreach (City city in cities)
+            foreach (City city in cities.Values)
             {
                 SetCityPopulation(city);
                 city.ReligionId = religionIds.GetRandomElement();
                 city.CultureId = cultureIds.GetRandomElement();
             }
+        }
+
+        void GenerateCountries()
+        {
+            countries = new List<Country>();
+
+            IList<string> validCityIds = cities.Values.Where(x => x.TotalPopulation > 0).Select(x => x.Id).ToList();
+
+            for (int i = 0; i < 1900; i++)
+            {
+                City city = cities[validCityIds.GetRandomElement()];
+                Country country = new Country();
+
+                country.Id = GenerateCountryId(city.NameId);
+
+                country.CapitalId = city.Id;
+                country.CultureId = city.CultureId;
+                country.ReligionId = city.ReligionId;
+
+                country.ColourRed = random.Next(0, 256);
+                country.ColourGreen = random.Next(0, 256);
+                country.ColourBlue = random.Next(0, 256);
+
+                countries.Add(country);
+                validCityIds.Remove(city.Id);
+            }
+        }
+
+        string GenerateCountryId(string capitalName)
+        {
+            string id = null;
+            
+            if (capitalName.Length == 2)
+            {
+                capitalName.Substring(0, 2).ToUpper();
+                capitalName += capitalName[1];
+            }
+            else
+            {
+                capitalName.Substring(0, 3).ToUpper();
+            }
+
+            while (countries.Any(x => x.Id == id) ||
+                   string.IsNullOrWhiteSpace(id) ||
+                   id.Length != 3)
+            {
+                id = string.Empty;
+
+                for (int i = 0; i < 3; i++)
+                {
+                    id += (char)(random.Next(65, 91));
+                }
+            }
+
+            return id;
         }
 
         void SetCityPopulation(City city)
