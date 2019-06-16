@@ -19,6 +19,8 @@ namespace ImperatorShatteredWorldGenerator.Service.Models
         public string ReligionId { get; set; }
 
         public string GovernmentId { get; set; }
+
+        public string DiplomaticStanceId { get; set; }
         
         public string CapitalId { get; set; }
 
