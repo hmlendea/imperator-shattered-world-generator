@@ -4,27 +4,30 @@ using System.IO;
 using System.Linq;
 
 using NuciDAL.Repositories;
+using NuciExtensions;
 
 using ImperatorShatteredWorldGenerator.DataAccess.DataObjects;
 using ImperatorShatteredWorldGenerator.Mapping;
 using ImperatorShatteredWorldGenerator.Models;
+using ImperatorShatteredWorldGenerator.Service;
 
 namespace ImperatorShatteredWorldGenerator
 {
     public sealed class Generator
     {
         const int CityPopulationCount = 4;
-
-        readonly IRepository<CityEntity> vanillaCityRepository;
+        
+        readonly IEntitiesLoader entitiesLoader;
 
         readonly Random random;
-        
-        IList<City> cities;
 
-        public Generator(IRepository<CityEntity> vanillaCityRepository)
+        IList<City> cities;
+        IList<string> religionIds;
+
+        public Generator(IEntitiesLoader entitiesLoader, string modDirectory)
         {
-            this.vanillaCityRepository = vanillaCityRepository;
-            
+            this.entitiesLoader = entitiesLoader;
+
             random = new Random();
 
             LoadEntities();
@@ -67,7 +70,8 @@ namespace ImperatorShatteredWorldGenerator
 
         void LoadEntities()
         {
-            cities = vanillaCityRepository.GetAll().ToServiceModels().ToList();
+            cities = entitiesLoader.LoadCities().ToList();
+            religionIds = entitiesLoader.LoadReligionIds().ToList();
         }
 
         void ProcessCities()
@@ -75,6 +79,7 @@ namespace ImperatorShatteredWorldGenerator
             foreach (City city in cities)
             {
                 SetCityPopulation(city);
+                city.ReligionId = religionIds.GetRandomElement();
             }
         }
 
