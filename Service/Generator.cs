@@ -159,8 +159,8 @@ namespace ImperatorShatteredWorldGenerator.Service
             foreach (City city in cities.Values)
             {
                 SetCityPopulation(city);
-                city.ReligionId = religionIds.GetRandomElement();
-                city.CultureId = cultureIds.GetRandomElement();
+                city.ReligionId = religionIds.GetRandomElement(random);
+                city.CultureId = cultureIds.GetRandomElement(random);
             }
 
             foreach (Country country in countries)
@@ -180,7 +180,7 @@ namespace ImperatorShatteredWorldGenerator.Service
 
             for (int i = 0; i < 1000; i++)
             {
-                City city = cities[validCityIds.GetRandomElement()];
+                City city = cities[validCityIds.GetRandomElement(random)];
                 Country country = new Country();
 
                 country.Id = GenerateCountryId(city.NameId);
@@ -189,8 +189,8 @@ namespace ImperatorShatteredWorldGenerator.Service
                 country.CultureId = city.CultureId;
                 country.ReligionId = city.ReligionId;
 
-                country.GovernmentId = governmentIds.GetRandomElement();
-                country.DiplomaticStanceId = diplomaticStanceIds.GetRandomElement();
+                country.GovernmentId = governmentIds.GetRandomElement(random);
+                country.DiplomaticStanceId = diplomaticStanceIds.GetRandomElement(random);
                 country.CentralisationLevel = random.Next(CountryCentralisationMin, CountryCentralisationMax);
                 country.CapitalId = city.Id;
 
@@ -240,7 +240,7 @@ namespace ImperatorShatteredWorldGenerator.Service
 
                 for (int i = 0; i < 3; i++)
                 {
-                    id += AllowedCapitalIdCharacters.GetRandomElement();
+                    id += AllowedCapitalIdCharacters.GetRandomElement(random);
                 }
             }
 
