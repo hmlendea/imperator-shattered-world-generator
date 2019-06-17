@@ -33,6 +33,7 @@ namespace ImperatorShatteredWorldGenerator.Service.Models
         public Country()
         {
             ShipNames = new List<string> { "Boaty", "McBoatface", "Boatface", "Shippy", "McShipface", "Shipface" };
+            CentralisationLevel = -1;
         }
     }
 }
