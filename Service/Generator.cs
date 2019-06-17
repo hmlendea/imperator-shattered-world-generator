@@ -16,7 +16,7 @@ namespace ImperatorShatteredWorldGenerator.Service
     public sealed class Generator
     {
         const int CityPopulationMin = 4;
-        const int CityPopulationMax = 8;
+        const int CityPopulationMax = 12;
         
         readonly IEntitiesLoader entitiesLoader;
 
@@ -107,6 +107,7 @@ namespace ImperatorShatteredWorldGenerator.Service
                 countriesSetupContent += countrySetupDefinition;
                 countriesLocalisationContent += countryLocalisationContent;
                 File.WriteAllText(countryFilePath, countryFileContent);
+                SaveUnicodeFile(countryFilePath, countryFileContent);
             }
 
             countriesSetupContent += "} }";
@@ -144,7 +145,7 @@ namespace ImperatorShatteredWorldGenerator.Service
 
             IList<string> validCityIds = cities.Values.Where(x => x.TotalPopulation > 0).Select(x => x.Id).ToList();
 
-            for (int i = 0; i < 1250; i++)
+            for (int i = 0; i < 1600; i++)
             {
                 City city = cities[validCityIds.GetRandomElement()];
                 Country country = new Country();
