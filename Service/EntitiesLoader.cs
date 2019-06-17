@@ -36,8 +36,11 @@ namespace ImperatorShatteredWorldGenerator.Service
             const string ReligionRegexPattern = "^\\t\\t\\treligion\\s*=\\s*(.*)";
             const string CentralisationRegexPattern = "^\\t\\t\\tcentralization\\s*=\\s*([0-9]*)";
             const string CapitalRegexPattern = "^\\t\\t\\tcapital\\s*=\\s*([0-9]*)";
+            const string ColourRegexPattern = "rgb\\s*{\\s*([0-9]*)\\s*([0-9]*)\\s*([0-9]*)\\s*}";
 
             string setupFilePath = Path.Combine(gameDirectory, "game", "common", "setup.txt");
+            string localisationFilePath = Path.Combine(gameDirectory, "game", "localization", "english", "countries_l_english.yml");
+            string countriesFilePath = Path.Combine(gameDirectory, "game", "common", "countries.txt");
             IList<Country> countries = new List<Country>();
             IList<string> lines = File.ReadAllLines(setupFilePath);
 
@@ -49,6 +52,7 @@ namespace ImperatorShatteredWorldGenerator.Service
                 if (match.Success)
                 {
                     Country country = new Country();
+                    country.IsVanilla = true;
                     
                     for (int j = i; j > 0; j--)
                     {
@@ -126,6 +130,41 @@ namespace ImperatorShatteredWorldGenerator.Service
                         }
                     }
 
+                    string countryNameRegexPattern = $"^\\s*{country.Id}:.*\\s\"([^\"]*)\"";
+                    string countryFileRegexPattern = $"^\\s*{country.Id}\\s*=\\s*\"([^\"]*)\"";
+
+                    foreach (string localisationLine in File.ReadAllLines(localisationFilePath))
+                    {
+                        Match nameMatch = Regex.Match(localisationLine, countryNameRegexPattern);
+
+                        if (nameMatch.Success)
+                        {
+                            country.Name = nameMatch.Groups[1].Value;
+                            break;
+                        }
+                    }
+
+                    foreach (string countriesFileLine in File.ReadAllLines(countriesFilePath))
+                    {
+                        Match fileMatch = Regex.Match(countriesFileLine, countryFileRegexPattern);
+
+                        if (!fileMatch.Success)
+                        {
+                            continue;
+                        }
+
+                        string countryFilePath = Path.Combine(gameDirectory, "game", "common", fileMatch.Groups[1].Value);
+                        string countryFileContent = File.ReadAllText(countryFilePath);
+
+                        Match colourMatch = Regex.Match(countryFileContent, ColourRegexPattern);
+
+                        country.ColourRed = int.Parse(colourMatch.Groups[1].Value);
+                        country.ColourGreen = int.Parse(colourMatch.Groups[2].Value);
+                        country.ColourBlue = int.Parse(colourMatch.Groups[3].Value);
+
+                        break;
+                    }
+                    
                     countries.Add(country);
                 }
             }

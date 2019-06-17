@@ -28,6 +28,8 @@ namespace ImperatorShatteredWorldGenerator.Service.Models
 
         public IEnumerable<string> ShipNames { get; set; }
 
+        public bool IsVanilla { get; set; }
+
         public Country()
         {
             ShipNames = new List<string> { "Boaty", "McBoatface", "Boatface", "Shippy", "McShipface", "Shipface" };
