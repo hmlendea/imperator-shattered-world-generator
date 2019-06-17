@@ -22,6 +22,7 @@ namespace ImperatorShatteredWorldGenerator.Service
         const int CountryCentralisationMax = 100;
         
         readonly IEntitiesLoader entitiesLoader;
+        readonly IModWriter modWriter;
 
         readonly Random random;
 
@@ -33,115 +34,22 @@ namespace ImperatorShatteredWorldGenerator.Service
         IList<string> governmentIds;
         IList<string> diplomaticStanceIds;
 
-        public Generator(IEntitiesLoader entitiesLoader, int seed)
+        public Generator(IEntitiesLoader entitiesLoader, IModWriter modWriter, int seed)
         {
             this.entitiesLoader = entitiesLoader;
+            this.modWriter = modWriter;
 
             random = new Random(seed);
 
             LoadEntities();
         }
 
-        public void Generate()
+        public void Generate(string modDirectory)
         {
             ProcessCities();
             GenerateCountries();
-        }
 
-        public void Save(string modDirectory)
-        {
-            string modCommonDirectory = Path.Combine(modDirectory, "common");
-            string modCountriesDirectory = Path.Combine(modCommonDirectory, "countries");
-            string modLocalisationDirectory = Path.Combine(modDirectory, "localization", "english");
-
-            string modProvinceSetupFilePath = Path.Combine(modCommonDirectory, "province_setup.csv");
-            string countriesTxtPath = Path.Combine(modCommonDirectory, "countries.txt");
-            string countriesSetupPath = Path.Combine(modCommonDirectory, "setup.txt");
-            string countriesLocalisationPath = Path.Combine(modLocalisationDirectory, $"SW_countries_l_english.yml");
-
-            string countriesTxtContent =
-                "REB = \"countries/rebels.txt\"" + Environment.NewLine +
-                "PIR = \"countries/pirates.txt\"" + Environment.NewLine +
-                "BAR = \"countries/barbarians.txt\"" + Environment.NewLine +
-                "MER = \"countries/mercenaries.txt\"" + Environment.NewLine;
-            string countriesSetupContent = "country = { countries = {" + Environment.NewLine;
-            string countriesLocalisationContent = "l_english:" + Environment.NewLine;
-
-            if (Directory.Exists(modDirectory))
-            {
-                Directory.Delete(modDirectory, true);
-            }
-            
-            Directory.CreateDirectory(modCountriesDirectory);
-            Directory.CreateDirectory(modLocalisationDirectory);
-
-            IRepository<CityEntity> modCityRepository = new CsvRepository<CityEntity>(modProvinceSetupFilePath);
-
-            foreach (City city in cities.Values)
-            {
-                modCityRepository.Add(city.ToDataObject());
-            }
-
-            foreach (Country country in countries)
-            {
-                string countryFileName = $"{country.Id}.txt";
-                string countryFilePath = Path.Combine(modCountriesDirectory, countryFileName);
-
-                string countryTxtDefinition = $"{country.Id} = \"countries/{countryFileName}\"{Environment.NewLine}";
-
-                string countrySetupDefinition = $"{country.Id} = {{ # " + country.Name + Environment.NewLine;
-
-                if (country.IsVanilla)
-                {
-                    countrySetupDefinition +=
-                        $"    # VANILLA COUNTRY - REQUIRED FOR COMPATIBILITY" + Environment.NewLine +
-                        $"    # Removing it could break the game once enough ingame years (even decades) have passed" + Environment.NewLine;
-                }
-
-                countrySetupDefinition +=
-                    $"    government = {country.GovernmentId}" + Environment.NewLine;
-                
-                if (!string.IsNullOrWhiteSpace(country.DiplomaticStanceId))
-                {
-                    countrySetupDefinition += $"    diplomatic_stance = {country.DiplomaticStanceId}" + Environment.NewLine;
-                }
-
-                countrySetupDefinition +=
-                    $"    primary_culture = {country.CultureId}" + Environment.NewLine +
-                    $"    religion = {country.ReligionId}" + Environment.NewLine;
-
-                if (country.CentralisationLevel >= 0)
-                {
-                    countrySetupDefinition += $"    centralization = {country.CentralisationLevel}" + Environment.NewLine;
-                }
-
-                countrySetupDefinition +=
-                    $"    capital = {country.CapitalId}" + Environment.NewLine +
-                    $"    own_control_core = {{ {country.CapitalId} }}" + Environment.NewLine +
-                    $"}}" + Environment.NewLine;
-
-                string countryLocalisationContent =
-                    $" {country.Id}:0 \"{country.Name}\"{Environment.NewLine}";
-
-                string countryFileContent =
-                    $"color = {{ {country.ColourRed} {country.ColourGreen} {country.ColourBlue} }}{Environment.NewLine}" +
-                    $"ship_names = {{ {string.Join(' ', country.ShipNames)} }}{Environment.NewLine}";
-                
-
-                countriesTxtContent += countryTxtDefinition;
-                countriesSetupContent += countrySetupDefinition;
-                countriesLocalisationContent += countryLocalisationContent;
-                SaveUnicodeFile(countryFilePath, countryFileContent);
-            }
-
-            countriesSetupContent += "} }";
-            countriesLocalisationContent += Environment.NewLine;
-
-            modCityRepository.ApplyChanges();
-            
-            File.WriteAllText(countriesTxtPath, countriesTxtContent);
-            File.WriteAllText(countriesSetupPath, countriesSetupContent);
-            SaveUnicodeFile(countriesLocalisationPath, countriesLocalisationContent);
+            modWriter.CreateMod(modDirectory, cities.Values, countries);
         }
 
         void LoadEntities()
@@ -205,23 +113,28 @@ namespace ImperatorShatteredWorldGenerator.Service
 
         string GenerateCountryId(string capitalName)
         {
-            string id = null;
             const string AllowedCapitalIdCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             
-            if (capitalName.Length == 2)
+            string id = null;
+            string normalisedCapitalName = capitalName
+                .RemovePunctuation()
+                .Replace(" ", "")
+                .ToUpper();
+            
+            if (normalisedCapitalName.Length == 2)
             {
-                id =capitalName.Substring(0, 2).ToUpper();
-                id += capitalName[1];
+                id = normalisedCapitalName.Substring(0, 2).ToUpper();
+                id += normalisedCapitalName[1];
             }
             else
             {
-                for (int i = 0; i < capitalName.Length; i++)
+                for (int i = 0; i < normalisedCapitalName.Length; i++)
                 {
-                    for (int j = i + 1; j < capitalName.Length; j++)
+                    for (int j = i + 1; j < normalisedCapitalName.Length; j++)
                     {
-                        for (int k = j + 1; k < capitalName.Length; k++)
+                        for (int k = j + 1; k < normalisedCapitalName.Length; k++)
                         {
-                            id = $"{capitalName[i]}{capitalName[j]}{capitalName[k]}".ToUpper();
+                            id = $"{normalisedCapitalName[i]}{normalisedCapitalName[j]}{normalisedCapitalName[k]}";
 
                             if (countries.All(x => x.Id != id) && id.All(AllowedCapitalIdCharacters.Contains))
                             {
@@ -294,14 +207,6 @@ namespace ImperatorShatteredWorldGenerator.Service
                 {
                     city.CitizensCount += 1;
                 }
-            }
-        }
-
-        void SaveUnicodeFile(string path, string content)
-        {
-            using (StreamWriter writer = new StreamWriter(path, false, Encoding.UTF8))
-            {
-                writer.Write(content);
             }
         }
     }
