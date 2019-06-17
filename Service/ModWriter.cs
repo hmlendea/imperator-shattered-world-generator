@@ -94,12 +94,12 @@ namespace ImperatorShatteredWorldGenerator.Service
 
         void WriteCountriesLocalisationFile(string modPath, IEnumerable<Country> countries)
         {
-            string filePath = Path.Combine(modPath, "localization", "SW_countries.yml");
+            string filePath = Path.Combine(modPath, "localization", "SW_countries_l_english.yml");
             string fileContent = "l_english:" + Environment.NewLine;
 
             foreach (Country country in countries.Where(c => !c.IsVanilla))
             {
-                fileContent += $"  {country.Id}:0 \"{country.Name}\"{Environment.NewLine}";
+                fileContent += $" {country.Id}:0 \"{country.Name}\"{Environment.NewLine}";
             }
 
             WriteUnicodeFile(filePath, fileContent);
