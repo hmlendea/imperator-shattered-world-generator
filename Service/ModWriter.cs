@@ -162,28 +162,37 @@ namespace ImperatorShatteredWorldGenerator.Service
 
         void CreateModMetadata(string modName)
         {
+            string modDirectoryName = GetModDirectoryName(modName);
             string modFilePath = GetModFilePath(modName);
             string descriptorFilePath = Path.Combine(GetModDirectoryPath(modName), "descriptor.mod");
-            string fileContent = $"name = \"{modName}\"";
+
+            string fileContent =
+                $"name = \"{modName}\"" + Environment.NewLine +
+                $"path = \"mod/{modDirectoryName}\"";
 
             WriteFile(modFilePath, fileContent);
             WriteFile(descriptorFilePath, fileContent);
         }
 
+        string GetModFilePath(string modName)
+        {
+            return GetModDirectoryPath(modName) + ".mod";
+        }
+
         string GetModDirectoryPath(string modName)
         {
-            string modDirName = modName
-                .RemovePunctuation()
-                .RemoveDiacritics()
-                .Replace(" ", "-")
-                .ToLower();
+            string modDirName = GetModDirectoryName(modName);
                 
             return Path.Combine(Environment.CurrentDirectory, "out", modDirName);
         }
 
-        string GetModFilePath(string modName)
+        string GetModDirectoryName(string modName)
         {
-            return GetModDirectoryPath(modName) + ".mod";
+            return modName
+                .RemovePunctuation()
+                .RemoveDiacritics()
+                .Replace(" ", "-")
+                .ToLower();
         }
 
         void WriteFile(string path, string content)
