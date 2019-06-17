@@ -30,11 +30,12 @@ namespace ImperatorShatteredWorldGenerator.Service
         IList<string> governmentIds;
         IList<string> diplomaticStanceIds;
 
-        public Generator(IEntitiesLoader entitiesLoader)
+        public Generator(IEntitiesLoader entitiesLoader, int seed)
+            : base()
         {
             this.entitiesLoader = entitiesLoader;
 
-            random = new Random();
+            random = new Random(seed);
 
             LoadEntities();
         }
