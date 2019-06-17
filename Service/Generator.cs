@@ -84,12 +84,17 @@ namespace ImperatorShatteredWorldGenerator.Service
         void GenerateCountries()
         {
             IList<string> validCityIds = cities.Values
-                .Where(city => city.IsHabitable &&
-                               countries.All(country => country.CapitalId != city.Id))
+                .Where(city =>
+                    city.IsHabitable &&
+                    countries.All(country =>
+                        country.CapitalId != city.Id &&
+                        country.Name != city.NameId))
+                .GroupBy(x => x.NameId)
+                .Select(g => g.GetRandomElement())
                 .Select(x => x.Id)
                 .ToList();
 
-            for (int i = 0; i < 1250; i++)
+            for (int i = 0; i < 1500; i++)
             {
                 City city = cities[validCityIds.GetRandomElement(random)];
                 Country country = new Country();
