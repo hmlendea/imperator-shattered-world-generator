@@ -24,6 +24,8 @@ namespace ImperatorShatteredWorldGenerator.Service.Models
         
         public string CapitalId { get; set; }
 
+        public int CentralisationLevel { get; set; }
+
         public IEnumerable<string> ShipNames { get; set; }
 
         public Country()

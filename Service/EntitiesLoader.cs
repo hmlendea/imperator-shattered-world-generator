@@ -27,6 +27,112 @@ namespace ImperatorShatteredWorldGenerator.Service
             return vanillaCityRepository.GetAll().ToServiceModels();
         }
 
+        public IEnumerable<Country> LoadCountries()
+        {
+            const string CountryIdRegexPattern = "^\\t\\t([A-Z]*)\\s*=";
+            const string GovernmentRegexPattern = "^\\t\\t\\tgovernment\\s*=\\s*(.*)";
+            const string DiplomaticStanceRegexPattern = "^\\t\\t\\tdiplomatic_stance\\s*=\\s*(.*)";
+            const string CultureRegexPattern = "^\\t\\t\\tprimary_culture\\s*=\\s*(.*)";
+            const string ReligionRegexPattern = "^\\t\\t\\treligion\\s*=\\s*(.*)";
+            const string CentralisationRegexPattern = "^\\t\\t\\tcentralization\\s*=\\s*([0-9]*)";
+            const string CapitalRegexPattern = "^\\t\\t\\tcapital\\s*=\\s*([0-9]*)";
+
+            string setupFilePath = Path.Combine(gameDirectory, "game", "common", "setup.txt");
+            IList<Country> countries = new List<Country>();
+            IList<string> lines = File.ReadAllLines(setupFilePath);
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                string line = lines[i];
+                Match match = Regex.Match(line, CapitalRegexPattern);
+
+                if (match.Success)
+                {
+                    Country country = new Country();
+                    
+                    for (int j = i; j > 0; j--)
+                    {
+                        string line2 = lines[j];
+
+                        if (string.IsNullOrWhiteSpace(country.Id))
+                        {
+                            Match countryIdMatch = Regex.Match(line2, CountryIdRegexPattern);
+
+                            if (countryIdMatch.Success)
+                            {
+                                country.Id = countryIdMatch.Groups[1].Value;
+                                break;
+                            }
+                        }
+                        
+                        if (string.IsNullOrWhiteSpace(country.GovernmentId))
+                        {
+                            Match governmentMatch = Regex.Match(line2, GovernmentRegexPattern);
+
+                            if (governmentMatch.Success)
+                            {
+                                country.GovernmentId = governmentMatch.Groups[1].Value;
+                            }
+                        }
+                        
+                        if (string.IsNullOrWhiteSpace(country.DiplomaticStanceId))
+                        {
+                            Match diplomaticStanceMatch = Regex.Match(line2, DiplomaticStanceRegexPattern);
+
+                            if (diplomaticStanceMatch.Success)
+                            {
+                                country.DiplomaticStanceId = diplomaticStanceMatch.Groups[1].Value;
+                            }
+                        }
+                        
+                        if (string.IsNullOrWhiteSpace(country.CultureId))
+                        {
+                            Match cultureMatch = Regex.Match(line2, CultureRegexPattern);
+
+                            if (cultureMatch.Success)
+                            {
+                                country.CultureId = cultureMatch.Groups[1].Value;
+                            }
+                        }
+                        
+                        if (string.IsNullOrWhiteSpace(country.ReligionId))
+                        {
+                            Match religionMatch = Regex.Match(line2, ReligionRegexPattern);
+
+                            if (religionMatch.Success)
+                            {
+                                country.ReligionId = religionMatch.Groups[1].Value;
+                            }
+                        }
+                        
+                        if (country.CentralisationLevel == 0)
+                        {
+                            Match centralizationMatch = Regex.Match(line2, CentralisationRegexPattern);
+
+                            if (centralizationMatch.Success && !string.IsNullOrWhiteSpace(centralizationMatch.Groups[1].Value))
+                            {
+                                country.CentralisationLevel = int.Parse(centralizationMatch.Groups[1].Value);
+                            }
+                        }
+                        
+                        if (string.IsNullOrWhiteSpace(country.CapitalId))
+                        {
+                            Match capitalMatch = Regex.Match(line2, CapitalRegexPattern);
+
+                            if (capitalMatch.Success)
+                            {
+                                country.CapitalId = capitalMatch.Groups[1].Value;
+                            }
+                        }
+                    }
+
+                    countries.Add(country);
+                }
+            }
+
+            return countries;
+        }
+
         public IEnumerable<string> LoadReligionIds()
         {
             const string ReligionIdRegexPattern = "^([^#\\s]*)\\s*=\\s*{";
