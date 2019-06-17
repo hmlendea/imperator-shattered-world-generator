@@ -17,6 +17,9 @@ namespace ImperatorShatteredWorldGenerator.Service
     {
         const int CityPopulationMin = 4;
         const int CityPopulationMax = 12;
+
+        const int CountryCentralisationMin = 0;
+        const int CountryCentralisationMax = 100;
         
         readonly IEntitiesLoader entitiesLoader;
 
@@ -31,7 +34,6 @@ namespace ImperatorShatteredWorldGenerator.Service
         IList<string> diplomaticStanceIds;
 
         public Generator(IEntitiesLoader entitiesLoader, int seed)
-            : base()
         {
             this.entitiesLoader = entitiesLoader;
 
@@ -106,8 +108,14 @@ namespace ImperatorShatteredWorldGenerator.Service
 
                 countrySetupDefinition +=
                     $"    primary_culture = {country.CultureId}" + Environment.NewLine +
-                    $"    religion = {country.ReligionId}" + Environment.NewLine +
-                    $"    centralization = {country.CentralisationLevel}" + Environment.NewLine +
+                    $"    religion = {country.ReligionId}" + Environment.NewLine;
+
+                if (country.CentralisationLevel >= 0)
+                {
+                    countrySetupDefinition += $"    centralization = {country.CentralisationLevel}" + Environment.NewLine;
+                }
+
+                countrySetupDefinition +=
                     $"    capital = {country.CapitalId}" + Environment.NewLine +
                     $"    own_control_core = {{ {country.CapitalId} }}" + Environment.NewLine +
                     $"}}" + Environment.NewLine;
@@ -183,6 +191,7 @@ namespace ImperatorShatteredWorldGenerator.Service
 
                 country.GovernmentId = governmentIds.GetRandomElement();
                 country.DiplomaticStanceId = diplomaticStanceIds.GetRandomElement();
+                country.CentralisationLevel = random.Next(CountryCentralisationMin, CountryCentralisationMax);
                 country.CapitalId = city.Id;
 
                 country.ColourRed = random.Next(0, 256);
