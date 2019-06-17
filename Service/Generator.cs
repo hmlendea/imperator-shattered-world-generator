@@ -91,11 +91,12 @@ namespace ImperatorShatteredWorldGenerator.Service
                     $"ship_names = {{ {string.Join(' ', country.ShipNames)} }}{Environment.NewLine}";
 
                 string countrySetupDefinition =
-                    $"{country.Id} = {{" + Environment.NewLine +
+                    $"{country.Id} = {{ # " + country.Name + Environment.NewLine +
                     $"    government = {country.GovernmentId}" + Environment.NewLine +
                     $"    diplomatic_stance = {country.DiplomaticStanceId}" + Environment.NewLine +
                     $"    primary_culture = {country.CultureId}" + Environment.NewLine +
                     $"    religion = {country.ReligionId}" + Environment.NewLine +
+                    $"    centralization = {country.CentralisationLevel}" + Environment.NewLine +
                     $"    capital = {country.CapitalId}" + Environment.NewLine +
                     $"    own_control_core = {{ {country.CapitalId} }}" + Environment.NewLine +
                     $"}}" + Environment.NewLine;
@@ -123,6 +124,7 @@ namespace ImperatorShatteredWorldGenerator.Service
         void LoadEntities()
         {
             cities = entitiesLoader.LoadCities().ToDictionary(x => x.Id, x => x);
+            countries = entitiesLoader.LoadCountries().ToList();
             religionIds = entitiesLoader.LoadReligionIds().ToList();
             cultureIds = entitiesLoader.LoadCultureIds().ToList();
             governmentIds = entitiesLoader.LoadGovernmentIds().ToList();
@@ -141,11 +143,13 @@ namespace ImperatorShatteredWorldGenerator.Service
 
         void GenerateCountries()
         {
-            countries = new List<Country>();
+            IList<string> validCityIds = cities.Values
+                .Where(city => city.TotalPopulation > 0 &&
+                               countries.All(country => country.CapitalId != city.Id))
+                .Select(x => x.Id)
+                .ToList();
 
-            IList<string> validCityIds = cities.Values.Where(x => x.TotalPopulation > 0).Select(x => x.Id).ToList();
-
-            for (int i = 0; i < 1600; i++)
+            for (int i = 0; i < 1000; i++)
             {
                 City city = cities[validCityIds.GetRandomElement()];
                 Country country = new Country();

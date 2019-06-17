@@ -8,6 +8,8 @@ namespace ImperatorShatteredWorldGenerator.Service
     {
         IEnumerable<City> LoadCities();
 
+        IEnumerable<Country> LoadCountries();
+
         IEnumerable<string> LoadReligionIds();
 
         IEnumerable<string> LoadCultureIds();
