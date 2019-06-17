@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 
 using NuciDAL.Repositories;
+using NuciExtensions;
 
 using ImperatorShatteredWorldGenerator.DataAccess.DataObjects;
 using ImperatorShatteredWorldGenerator.Service.Mapping;
@@ -15,37 +16,45 @@ namespace ImperatorShatteredWorldGenerator.Service
     public sealed class ModWriter : IModWriter
     {
         public void CreateMod(
-            string modPath,
+            string modName,
             IEnumerable<City> cities,
             IEnumerable<Country> countries)
         {
-            CreateModStructure(modPath);
+            PrepareDirectoryStructure(modName);
+            CreateModMetadata(modName);
 
-            WriteProvincesSetup(modPath, cities);
-            WriteCountryFiles(modPath, countries);
-            WriteCountriesDefinitionIndexFile(modPath, countries);
-            WriteCountriesLocalisationFile(modPath, countries);
-            WriteSetupFile(modPath, countries);
+            WriteProvincesSetup(modName, cities);
+            WriteCountryFiles(modName, countries);
+            WriteCountriesDefinitionIndexFile(modName, countries);
+            WriteCountriesLocalisationFile(modName, countries);
+            WriteSetupFile(modName, countries);
         }
 
-        void CreateModStructure(string modPath)
+        void PrepareDirectoryStructure(string modName)
         {
+            string modPath = GetModDirectoryPath(modName);
             string modCommonDirectory = Path.Combine(modPath, "common");
             string modCountriesDirectory = Path.Combine(modCommonDirectory, "countries");
             string modLocalisationDirectory = Path.Combine(modPath, "localization");
+            string modFilePath = GetModFilePath(modName);
 
             if (Directory.Exists(modPath))
             {
                 Directory.Delete(modPath, true);
+            }
+
+            if (File.Exists(modFilePath))
+            {
+                File.Delete(modFilePath);
             }
             
             Directory.CreateDirectory(modCountriesDirectory);
             Directory.CreateDirectory(modLocalisationDirectory);
         }
 
-        void WriteProvincesSetup(string modPath, IEnumerable<City> cities)
+        void WriteProvincesSetup(string modName, IEnumerable<City> cities)
         {
-            string filePath = Path.Combine(modPath, "common", "province_setup.csv");
+            string filePath = Path.Combine(GetModDirectoryPath(modName), "common", "province_setup.csv");
 
             IRepository<CityEntity> repo = new CsvRepository<CityEntity>(filePath);
 
@@ -57,9 +66,9 @@ namespace ImperatorShatteredWorldGenerator.Service
             repo.ApplyChanges();
         }
 
-        void WriteCountryFiles(string modPath, IEnumerable<Country> countries)
+        void WriteCountryFiles(string modName, IEnumerable<Country> countries)
         {
-            string dirPath = Path.Combine(modPath, "common", "countries");
+            string dirPath = Path.Combine(GetModDirectoryPath(modName), "common", "countries");
 
             foreach (Country country in countries)
             {
@@ -75,9 +84,9 @@ namespace ImperatorShatteredWorldGenerator.Service
             }
         }
 
-        void WriteCountriesDefinitionIndexFile(string modPath, IEnumerable<Country> countries)
+        void WriteCountriesDefinitionIndexFile(string modName, IEnumerable<Country> countries)
         {
-            string filePath = Path.Combine(modPath, "common", "countries.txt");
+            string filePath = Path.Combine(GetModDirectoryPath(modName), "common", "countries.txt");
             string fileContent =
                 "REB = \"countries/rebels.txt\"" + Environment.NewLine +
                 "PIR = \"countries/pirates.txt\"" + Environment.NewLine +
@@ -92,9 +101,9 @@ namespace ImperatorShatteredWorldGenerator.Service
             WriteFile(filePath, fileContent);
         }
 
-        void WriteCountriesLocalisationFile(string modPath, IEnumerable<Country> countries)
+        void WriteCountriesLocalisationFile(string modName, IEnumerable<Country> countries)
         {
-            string filePath = Path.Combine(modPath, "localization", "SW_countries_l_english.yml");
+            string filePath = Path.Combine(GetModDirectoryPath(modName), "localization", "SW_countries_l_english.yml");
             string fileContent = "l_english:" + Environment.NewLine;
 
             foreach (Country country in countries.Where(c => !c.IsVanilla))
@@ -105,9 +114,9 @@ namespace ImperatorShatteredWorldGenerator.Service
             WriteUnicodeFile(filePath, fileContent);
         }
 
-        void WriteSetupFile(string modPath, IEnumerable<Country> countries)
+        void WriteSetupFile(string modName, IEnumerable<Country> countries)
         {
-            string filePath = Path.Combine(modPath, "common", "setup.txt");
+            string filePath = Path.Combine(GetModDirectoryPath(modName), "common", "setup.txt");
             string fileContent =
                 "country = {" + Environment.NewLine +
                 "  countries = {" + Environment.NewLine;
@@ -149,6 +158,32 @@ namespace ImperatorShatteredWorldGenerator.Service
             fileContent += "  }" + Environment.NewLine + "}";
 
             WriteFile(filePath, fileContent);
+        }
+
+        void CreateModMetadata(string modName)
+        {
+            string modFilePath = GetModFilePath(modName);
+            string descriptorFilePath = Path.Combine(GetModDirectoryPath(modName), "descriptor.mod");
+            string fileContent = $"name = \"{modName}\"";
+
+            WriteFile(modFilePath, fileContent);
+            WriteFile(descriptorFilePath, fileContent);
+        }
+
+        string GetModDirectoryPath(string modName)
+        {
+            string modDirName = modName
+                .RemovePunctuation()
+                .RemoveDiacritics()
+                .Replace(" ", "-")
+                .ToLower();
+                
+            return Path.Combine(Environment.CurrentDirectory, "out", modDirName);
+        }
+
+        string GetModFilePath(string modName)
+        {
+            return GetModDirectoryPath(modName) + ".mod";
         }
 
         void WriteFile(string path, string content)

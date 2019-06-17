@@ -9,13 +9,13 @@ namespace ImperatorShatteredWorldGenerator
     class Program
     {
         static string[] ImperatorDirectoryPathOptions = new string[] { "-d", "--dir", "--game", "--imperator" };
-        static string[] OutputModPathOptions = new string[] { "-o", "--out", "--output" };
+        static string[] ModNameOptions = new string[] { "-n", "--name" };
         static string[] SeedOptions = new string[] { "-s", "--seed" };
 
         static void Main(string[] args)
         {
             string gameDirectory = CliArgumentsReader.GetOptionValue(args, ImperatorDirectoryPathOptions);
-            string outputModPath = CliArgumentsReader.GetOptionValue(args, OutputModPathOptions);
+            string modName = CliArgumentsReader.GetOptionValue(args, ModNameOptions);
             int seed;
 
             if (CliArgumentsReader.HasOption(args, SeedOptions))
@@ -32,7 +32,7 @@ namespace ImperatorShatteredWorldGenerator
 
             Generator generator = new Generator(entitiesLoader, modWriter, seed);
 
-            generator.Generate(outputModPath);
+            generator.Generate(modName);
         }
     }
 }
