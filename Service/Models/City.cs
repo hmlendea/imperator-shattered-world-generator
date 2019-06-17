@@ -27,5 +27,11 @@ namespace ImperatorShatteredWorldGenerator.Service.Models
         public string ProvinceId { get; set; }
 
         public int TotalPopulation => CitizensCount + FreemenCount + TribesmenCount + SlavesCount;
+
+        public bool IsHabitable =>
+            !string.IsNullOrWhiteSpace(CultureId) &&
+            !string.IsNullOrWhiteSpace(ReligionId) &&
+            !string.IsNullOrWhiteSpace(TradeGoodId);
+            
     }
 }

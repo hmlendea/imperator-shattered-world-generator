@@ -64,7 +64,7 @@ namespace ImperatorShatteredWorldGenerator.Service
 
         void ProcessCities()
         {
-            foreach (City city in cities.Values)
+            foreach (City city in cities.Values.Where(c => c.IsHabitable))
             {
                 SetCityPopulation(city);
                 city.ReligionId = religionIds.GetRandomElement(random);
@@ -81,12 +81,12 @@ namespace ImperatorShatteredWorldGenerator.Service
         void GenerateCountries()
         {
             IList<string> validCityIds = cities.Values
-                .Where(city => city.TotalPopulation > 0 &&
+                .Where(city => city.IsHabitable &&
                                countries.All(country => country.CapitalId != city.Id))
                 .Select(x => x.Id)
                 .ToList();
 
-            for (int i = 0; i < 1000; i++)
+            for (int i = 0; i < 1500; i++)
             {
                 City city = cities[validCityIds.GetRandomElement(random)];
                 Country country = new Country();
@@ -167,25 +167,12 @@ namespace ImperatorShatteredWorldGenerator.Service
             city.TribesmenCount = 0;
             city.SlavesCount = 0;
 
-            if (string.IsNullOrWhiteSpace(city.TradeGoodId) ||
-                string.IsNullOrWhiteSpace(city.CultureId) ||
-                string.IsNullOrWhiteSpace(city.ReligionId) ||
-                string.IsNullOrWhiteSpace(city.NameId))
-            {
-                return;
-            }
-
             int populationCount = random.Next(CityPopulationMin, CityPopulationMax + 1);
 
             if (city.TotalPopulation == populationCount)
             {
                 return;
             }
-
-            city.CitizensCount = 0;
-            city.FreemenCount = 0;
-            city.TribesmenCount = 0;
-            city.SlavesCount = 0;
 
             for (int i = 0; i < populationCount; i++)
             {

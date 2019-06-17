@@ -32,7 +32,7 @@ namespace ImperatorShatteredWorldGenerator.Service
             const string CountryIdRegexPattern = "^\\t\\t([A-Z]*)\\s*=";
             const string GovernmentRegexPattern = "^\\t\\t\\tgovernment\\s*=\\s*(.*)";
             const string DiplomaticStanceRegexPattern = "^\\t\\t\\tdiplomatic_stance\\s*=\\s*(.*)";
-            const string CultureRegexPattern = "^\\t\\t\\tprimary_culture\\s*=\\s*(.*)";
+            const string CultureRegexPattern = "^\\t\\t\\tprimary_culture\\s*=\\s*([^ #]*)";
             const string ReligionRegexPattern = "^\\t\\t\\treligion\\s*=\\s*(.*)";
             const string CentralisationRegexPattern = "^\\t\\t\\tcentralization\\s*=\\s*([0-9]*)";
             const string CapitalRegexPattern = "^\\t\\t\\tcapital\\s*=\\s*([0-9]*)";
