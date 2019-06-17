@@ -98,7 +98,7 @@ namespace ImperatorShatteredWorldGenerator.Service
                 fileContent += $"{country.Id} = \"countries/{country.Id}.txt\"{Environment.NewLine}";
             }
 
-            WriteFile(filePath, fileContent);
+            WriteUnicodeFile(filePath, fileContent);
         }
 
         void WriteCountriesLocalisationFile(string modName, IEnumerable<Country> countries)
