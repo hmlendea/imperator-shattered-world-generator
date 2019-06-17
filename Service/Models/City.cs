@@ -18,9 +18,9 @@ namespace ImperatorShatteredWorldGenerator.Service.Models
 
         public int SlavesCount { get; set; }
 
-        public string CivilizationLevel { get; set; }
+        public int CivilizationLevel { get; set; }
 
-        public string BarbarianLevel { get; set; }
+        public int BarbarianLevel { get; set; }
 
         public string NameId { get; set; }
 
