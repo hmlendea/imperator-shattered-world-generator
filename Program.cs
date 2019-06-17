@@ -28,11 +28,11 @@ namespace ImperatorShatteredWorldGenerator
             }
 
             IEntitiesLoader entitiesLoader = new EntitiesLoader(gameDirectory);
+            IModWriter modWriter = new ModWriter();
 
-            Generator generator = new Generator(entitiesLoader, seed);
+            Generator generator = new Generator(entitiesLoader, modWriter, seed);
 
-            generator.Generate();
-            generator.Save(outputModPath);
+            generator.Generate(outputModPath);
         }
     }
 }
