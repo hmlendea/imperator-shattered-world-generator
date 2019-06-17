@@ -20,8 +20,8 @@ namespace ImperatorShatteredWorldGenerator.Service.Mapping
             serviceModel.FreemenCount = dataObject.FreemenCount;
             serviceModel.TribesmenCount = dataObject.TribesmenCount;
             serviceModel.SlavesCount = dataObject.SlavesCount;
-            serviceModel.CivilizationLevel = dataObject.CivilizationLevel;
-            serviceModel.BarbarianLevel = dataObject.BarbarianLevel;
+            serviceModel.CivilizationLevel = int.Parse(dataObject.CivilizationLevel);
+            serviceModel.BarbarianLevel = int.Parse(dataObject.BarbarianLevel);
             serviceModel.NameId = dataObject.NameId;
             serviceModel.ProvinceId = dataObject.ProvinceId;
 
@@ -40,8 +40,8 @@ namespace ImperatorShatteredWorldGenerator.Service.Mapping
             dataObject.FreemenCount = serviceModel.FreemenCount;
             dataObject.TribesmenCount = serviceModel.TribesmenCount;
             dataObject.SlavesCount = serviceModel.SlavesCount;
-            dataObject.CivilizationLevel = serviceModel.CivilizationLevel;
-            dataObject.BarbarianLevel = serviceModel.BarbarianLevel;
+            dataObject.CivilizationLevel = serviceModel.CivilizationLevel.ToString();
+            dataObject.BarbarianLevel = serviceModel.BarbarianLevel.ToString();
             dataObject.NameId = serviceModel.NameId;
             dataObject.ProvinceId = serviceModel.ProvinceId;
 
