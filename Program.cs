@@ -32,7 +32,9 @@ namespace ImperatorShatteredWorldGenerator
 
             Generator generator = new Generator(entitiesLoader, modWriter, seed);
 
+            Console.WriteLine($"Generating a shattered world using the seed '{seed}'...");
             generator.Generate(modName);
+            Console.WriteLine($"Done!");
         }
     }
 }
