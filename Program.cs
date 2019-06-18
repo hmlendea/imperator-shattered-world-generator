@@ -22,8 +22,10 @@ namespace ImperatorShatteredWorldGenerator
 
             IServiceProvider serviceProvider = new ServiceCollection()
                 .AddTransient<IRandomNumberGenerator, RandomNumberGenerator>(s => new RandomNumberGenerator(seed))
-                .AddSingleton<IEntitiesLoader, EntitiesLoader>(s => new EntitiesLoader(gameDirectory))
-                .AddSingleton<IEntityGenerator, EntityGenerator>()
+                .AddSingleton<IEntityLoader, EntitiesLoader>(s => new EntitiesLoader(gameDirectory))
+                .AddSingleton<IEntityManager, EntityManager>()
+                .AddSingleton<ICityGenerator, CityGenerator>()
+                .AddSingleton<ICountryGenerator, CountryGenerator>()
                 .AddSingleton<IModWriter, ModWriter>()
                 .AddSingleton<IShatteredWorldGenerator, ShatteredWorldGenerator>()
                 .BuildServiceProvider();

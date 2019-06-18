@@ -10,7 +10,7 @@ using ImperatorShatteredWorldGenerator.Service.Models;
 
 namespace ImperatorShatteredWorldGenerator.Service
 {
-    public sealed class EntitiesLoader : IEntitiesLoader
+    public sealed class EntitiesLoader : IEntityLoader
     {
         readonly string gameDirectory;
 
@@ -41,6 +41,7 @@ namespace ImperatorShatteredWorldGenerator.Service
             string setupFilePath = Path.Combine(gameDirectory, "game", "common", "setup.txt");
             string localisationFilePath = Path.Combine(gameDirectory, "game", "localization", "english", "countries_l_english.yml");
             string countriesFilePath = Path.Combine(gameDirectory, "game", "common", "countries.txt");
+            
             IList<Country> countries = new List<Country>();
             IList<string> lines = File.ReadAllLines(setupFilePath);
 

@@ -4,7 +4,7 @@ using ImperatorShatteredWorldGenerator.Service.Models;
 
 namespace ImperatorShatteredWorldGenerator.Service
 {
-    public interface IEntitiesLoader
+    public interface IEntityLoader
     {
         IEnumerable<City> LoadCities();
 

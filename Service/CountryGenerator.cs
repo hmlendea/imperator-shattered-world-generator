@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Linq;
 
 using NuciExtensions;
@@ -8,42 +6,72 @@ using ImperatorShatteredWorldGenerator.Service.Models;
 
 namespace ImperatorShatteredWorldGenerator.Service
 {
-    public sealed class EntityGenerator : IEntityGenerator
+    public sealed class CountryGenerator : ICountryGenerator
     {
+        const int CountryCentralisationMin = 0;
+        const int CountryCentralisationMax = 100;
+        
         readonly static string AllowedCapitalIdCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         readonly static string[] DisallowedCountryIds = { "REB", "PIR", "BAR", "MER" };
 
+        readonly IEntityManager entityManager;
         readonly IRandomNumberGenerator rng;
 
-        public EntityGenerator(IRandomNumberGenerator rng)
+        public CountryGenerator(
+            IEntityManager entityManager,
+            IRandomNumberGenerator rng)
         {
+            this.entityManager = entityManager;
             this.rng = rng;
         }
 
-        public string GenerateCountryId(IEnumerable<Country> countries, string name)
+        public Country GenerateCountry(string capitalCityId)
+        {
+            City capital = entityManager.GetCity(capitalCityId);
+            Country country = new Country();
+
+            country.Id = GenerateCountryId(capital.NameId);
+            country.Name = capital.NameId;
+
+            country.CultureId = capital.CultureId;
+            country.ReligionId = capital.ReligionId;
+
+            country.GovernmentId = entityManager.GetGovernmentIds().GetRandomElement(rng.Randomiser);
+            country.DiplomaticStanceId = entityManager.GetDiplomaticStanceIds().GetRandomElement(rng.Randomiser);
+            country.CentralisationLevel = rng.Get(CountryCentralisationMin, CountryCentralisationMax);
+            country.CapitalId = capital.Id;
+
+            country.ColourRed = rng.Get(0, 255);
+            country.ColourGreen = rng.Get(0, 255);
+            country.ColourBlue = rng.Get(0, 255);
+
+            return country;
+        }
+
+        string GenerateCountryId(string name)
         {
             string normalisedCapitalName = name
                 .RemovePunctuation()
                 .Replace(" ", "")
                 .ToUpper();
             
-            string id = GenerateCapitalIdBasedOnName(countries, name);
+            string id = GenerateCapitalIdBasedOnName(name);
 
             if (id is null)
             {
-                id = GenerateRandomCapitalId(countries);
+                id = GenerateRandomCapitalId();
             }
 
             return id;
         }
 
-        string GenerateCapitalIdBasedOnName(IEnumerable<Country> countries, string name)
+        string GenerateCapitalIdBasedOnName(string name)
         {
             string normalisedName = name
                 .RemovePunctuation()
                 .Replace(" ", "")
                 .ToUpper();
-
+            
             if (normalisedName.Length < 3)
             {
                 return null;
@@ -57,7 +85,7 @@ namespace ImperatorShatteredWorldGenerator.Service
                     {
                         string id = $"{normalisedName[i]}{normalisedName[j]}{normalisedName[k]}";
 
-                        if (IsCapitalIdValid(countries, id))
+                        if (IsCapitalIdValid(id))
                         {
                             return id;
                         }
@@ -68,11 +96,11 @@ namespace ImperatorShatteredWorldGenerator.Service
             return null;
         }
 
-        string GenerateRandomCapitalId(IEnumerable<Country> countries)
+        string GenerateRandomCapitalId()
         {
             string id = null;
 
-            while (!IsCapitalIdValid(countries, id))
+            while (!IsCapitalIdValid(id))
             {
                 id = string.Empty;
 
@@ -85,7 +113,7 @@ namespace ImperatorShatteredWorldGenerator.Service
             return id;
         }
 
-        bool IsCapitalIdValid(IEnumerable<Country> countries, string id)
+        bool IsCapitalIdValid(string id)
         {
             if (string.IsNullOrWhiteSpace(id))
             {
@@ -94,7 +122,7 @@ namespace ImperatorShatteredWorldGenerator.Service
 
             return
                 !DisallowedCountryIds.Contains(id) &&
-                countries.All(x => x.Id != id) &&
+                entityManager.GetCountry(id) is null &&
                 id.All(AllowedCapitalIdCharacters.Contains);
         }
     }
