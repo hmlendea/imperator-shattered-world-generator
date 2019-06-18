@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -22,10 +21,11 @@ namespace ImperatorShatteredWorldGenerator.Service
         const int CountryCentralisationMin = 0;
         const int CountryCentralisationMax = 100;
         
+        readonly IEntityGenerator entityGenerator;
         readonly IEntitiesLoader entitiesLoader;
         readonly IModWriter modWriter;
 
-        readonly Random random;
+        readonly IRandomNumberGenerator rng;
 
         IDictionary<string, City> cities;
         IList<Country> countries;
@@ -35,12 +35,16 @@ namespace ImperatorShatteredWorldGenerator.Service
         IList<string> governmentIds;
         IList<string> diplomaticStanceIds;
 
-        public Generator(IEntitiesLoader entitiesLoader, IModWriter modWriter, int seed)
+        public Generator(
+            IEntityGenerator entityGenerator,
+            IEntitiesLoader entitiesLoader,
+            IModWriter modWriter,
+            IRandomNumberGenerator rng)
         {
+            this.entityGenerator = entityGenerator;
             this.entitiesLoader = entitiesLoader;
             this.modWriter = modWriter;
-
-            random = new Random(seed);
+            this.rng = rng;
 
             LoadEntities();
         }
@@ -68,10 +72,10 @@ namespace ImperatorShatteredWorldGenerator.Service
             foreach (City city in cities.Values.Where(c => c.IsHabitable))
             {
                 SetCityPopulation(city);
-                city.ReligionId = religionIds.GetRandomElement(random);
-                city.CultureId = cultureIds.GetRandomElement(random);
-                city.CivilizationLevel = GetRandomNumber(CityCivilizationMin, CityCivilizationMax);
-                //city.BarbarianLevel = GetRandomNumber(CityBarbarianLevelMin, CityBarbarianLevelMax);
+                city.ReligionId = religionIds.GetRandomElement(rng.Randomiser);
+                city.CultureId = cultureIds.GetRandomElement(rng.Randomiser);
+                city.CivilizationLevel = rng.Get(CityCivilizationMin, CityCivilizationMax);
+                //city.BarbarianLevel = rng.Get(CityBarbarianLevelMin, CityBarbarianLevelMax);
             }
 
             foreach (Country country in countries)
@@ -96,81 +100,27 @@ namespace ImperatorShatteredWorldGenerator.Service
 
             for (int i = 0; i < 1500; i++)
             {
-                City city = cities[validCityIds.GetRandomElement(random)];
+                City city = cities[validCityIds.GetRandomElement(rng.Randomiser)];
                 Country country = new Country();
 
-                country.Id = GenerateCountryId(city.NameId);
+                country.Id = entityGenerator.GenerateCountryId(countries, city.NameId);
                 country.Name = city.NameId;
 
                 country.CultureId = city.CultureId;
                 country.ReligionId = city.ReligionId;
 
-                country.GovernmentId = governmentIds.GetRandomElement(random);
-                country.DiplomaticStanceId = diplomaticStanceIds.GetRandomElement(random);
-                country.CentralisationLevel = GetRandomNumber(CountryCentralisationMin, CountryCentralisationMax);
+                country.GovernmentId = governmentIds.GetRandomElement(rng.Randomiser);
+                country.DiplomaticStanceId = diplomaticStanceIds.GetRandomElement(rng.Randomiser);
+                country.CentralisationLevel = rng.Get(CountryCentralisationMin, CountryCentralisationMax);
                 country.CapitalId = city.Id;
 
-                country.ColourRed = GetRandomNumber(0, 255);
-                country.ColourGreen = GetRandomNumber(0, 255);
-                country.ColourBlue = GetRandomNumber(0, 255);
+                country.ColourRed = rng.Get(0, 255);
+                country.ColourGreen = rng.Get(0, 255);
+                country.ColourBlue = rng.Get(0, 255);
 
                 countries.Add(country);
                 validCityIds.Remove(city.Id);
             }
-        }
-
-        int GetRandomNumber(int min, int max)
-        {
-            return random.Next(min, max + 1);
-        }
-
-        string GenerateCountryId(string capitalName)
-        {
-            const string AllowedCapitalIdCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            
-            string id = null;
-            string normalisedCapitalName = capitalName
-                .RemovePunctuation()
-                .Replace(" ", "")
-                .ToUpper();
-            
-            if (normalisedCapitalName.Length == 2)
-            {
-                id = normalisedCapitalName.Substring(0, 2).ToUpper();
-                id += normalisedCapitalName[1];
-            }
-            else
-            {
-                for (int i = 0; i < normalisedCapitalName.Length; i++)
-                {
-                    for (int j = i + 1; j < normalisedCapitalName.Length; j++)
-                    {
-                        for (int k = j + 1; k < normalisedCapitalName.Length; k++)
-                        {
-                            id = $"{normalisedCapitalName[i]}{normalisedCapitalName[j]}{normalisedCapitalName[k]}";
-
-                            if (countries.All(x => x.Id != id) && id.All(AllowedCapitalIdCharacters.Contains))
-                            {
-                                return id;
-                            }
-                        }
-                    }
-                }
-            }
-
-            while (countries.Any(x => x.Id == id) ||
-                   string.IsNullOrWhiteSpace(id) ||
-                   id.Length != 3)
-            {
-                id = string.Empty;
-
-                for (int i = 0; i < 3; i++)
-                {
-                    id += AllowedCapitalIdCharacters.GetRandomElement(random);
-                }
-            }
-
-            return id;
         }
 
         void SetCityPopulation(City city)
@@ -180,7 +130,7 @@ namespace ImperatorShatteredWorldGenerator.Service
             city.TribesmenCount = 0;
             city.SlavesCount = 0;
 
-            int populationCount = GetRandomNumber(CityPopulationMin, CityPopulationMax);
+            int populationCount = rng.Get(CityPopulationMin, CityPopulationMax);
 
             if (city.TotalPopulation == populationCount)
             {
@@ -189,7 +139,7 @@ namespace ImperatorShatteredWorldGenerator.Service
 
             for (int i = 0; i < populationCount; i++)
             {
-                int randomPop = GetRandomNumber(0, 3);
+                int randomPop = rng.Get(0, 3);
 
                 if (randomPop == 0)
                 {

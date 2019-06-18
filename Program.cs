@@ -16,6 +16,7 @@ namespace ImperatorShatteredWorldGenerator
         {
             string gameDirectory = CliArgumentsReader.GetOptionValue(args, ImperatorDirectoryPathOptions);
             string modName = CliArgumentsReader.GetOptionValue(args, ModNameOptions);
+
             int seed;
 
             if (CliArgumentsReader.HasOption(args, SeedOptions))
@@ -27,12 +28,14 @@ namespace ImperatorShatteredWorldGenerator
                 seed = new Random().Next();
             }
 
+            IRandomNumberGenerator rng = new RandomNumberGenerator(seed);
+            IEntityGenerator entityGenerator = new EntityGenerator(rng);
             IEntitiesLoader entitiesLoader = new EntitiesLoader(gameDirectory);
             IModWriter modWriter = new ModWriter();
 
-            Generator generator = new Generator(entitiesLoader, modWriter, seed);
+            Generator generator = new Generator(entityGenerator, entitiesLoader, modWriter, rng);
 
-            Console.WriteLine($"Generating a shattered world using the seed '{seed}'...");
+            Console.WriteLine($"Generating a shattered world using the seed '{rng.Seed}'...");
             generator.Generate(modName);
             Console.WriteLine($"Done!");
         }
