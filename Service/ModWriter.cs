@@ -15,19 +15,23 @@ namespace ImperatorShatteredWorldGenerator.Service
 {
     public sealed class ModWriter : IModWriter
     {
-        public void CreateMod(
-            string modName,
-            IEnumerable<City> cities,
-            IEnumerable<Country> countries)
+        readonly IEntityManager entityManager;
+
+        public ModWriter(IEntityManager entityManager)
+        {
+            this.entityManager = entityManager;
+        }
+
+        public void CreateMod(string modName)
         {
             PrepareDirectoryStructure(modName);
             CreateModMetadata(modName);
 
-            WriteProvincesSetup(modName, cities);
-            WriteCountryFiles(modName, countries);
-            WriteCountriesDefinitionIndexFile(modName, countries);
-            WriteCountriesLocalisationFile(modName, countries);
-            WriteSetupFile(modName, countries);
+            WriteProvincesSetup(modName);
+            WriteCountryFiles(modName);
+            WriteCountriesDefinitionIndexFile(modName);
+            WriteCountriesLocalisationFile(modName);
+            WriteSetupFile(modName);
             WriteEventsFile(modName);
             WriteDefinesFile(modName);
         }
@@ -72,14 +76,14 @@ namespace ImperatorShatteredWorldGenerator.Service
             WriteFile(descriptorFilePath, fileContent);
         }
 
-        void WriteProvincesSetup(string modName, IEnumerable<City> cities)
+        void WriteProvincesSetup(string modName)
         {
             string filePath = Path.Combine(GetModDirectoryPath(modName), "common", "province_setup.csv");
             string fileContent = "#ProvID;Culture;Religion;TradeGoods;Citizens;Freedmen;Slaves;Tribesmen;Civilization;Barbarian;NameRef;AraRef" + Environment.NewLine;
 
             IRepository<CityEntity> repo = new CsvRepository<CityEntity>(filePath);
 
-            foreach (City city in cities)
+            foreach (City city in entityManager.GetCities())
             {
                 repo.Add(city.ToDataObject());
 
@@ -101,11 +105,11 @@ namespace ImperatorShatteredWorldGenerator.Service
             WriteUnicodeFile(filePath, fileContent);
         }
 
-        void WriteCountryFiles(string modName, IEnumerable<Country> countries)
+        void WriteCountryFiles(string modName)
         {
             string dirPath = Path.Combine(GetModDirectoryPath(modName), "common", "countries");
 
-            foreach (Country country in countries)
+            foreach (Country country in entityManager.GetCountries())
             {
                 string filePath = Path.Combine(dirPath, $"{country.Id}.txt");
                 string fileContent =
@@ -119,7 +123,7 @@ namespace ImperatorShatteredWorldGenerator.Service
             }
         }
 
-        void WriteCountriesDefinitionIndexFile(string modName, IEnumerable<Country> countries)
+        void WriteCountriesDefinitionIndexFile(string modName)
         {
             string filePath = Path.Combine(GetModDirectoryPath(modName), "common", "countries.txt");
             string fileContent =
@@ -128,7 +132,7 @@ namespace ImperatorShatteredWorldGenerator.Service
                 "BAR = \"countries/barbarians.txt\"" + Environment.NewLine +
                 "MER = \"countries/mercenaries.txt\"" + Environment.NewLine;
 
-            foreach (Country country in countries)
+            foreach (Country country in entityManager.GetCountries())
             {
                 fileContent += $"{country.Id} = \"countries/{country.Id}.txt\"{Environment.NewLine}";
             }
@@ -136,12 +140,12 @@ namespace ImperatorShatteredWorldGenerator.Service
             WriteUnicodeFile(filePath, fileContent);
         }
 
-        void WriteCountriesLocalisationFile(string modName, IEnumerable<Country> countries)
+        void WriteCountriesLocalisationFile(string modName)
         {
             string filePath = Path.Combine(GetModDirectoryPath(modName), "localization", "SW_countries_l_english.yml");
             string fileContent = "l_english:" + Environment.NewLine;
 
-            foreach (Country country in countries.Where(c => !c.IsVanilla))
+            foreach (Country country in entityManager.GetCountries().Where(c => !c.IsVanilla))
             {
                 fileContent += $" {country.Id}:0 \"{country.Name}\"{Environment.NewLine}";
             }
@@ -149,14 +153,14 @@ namespace ImperatorShatteredWorldGenerator.Service
             WriteUnicodeFile(filePath, fileContent);
         }
 
-        void WriteSetupFile(string modName, IEnumerable<Country> countries)
+        void WriteSetupFile(string modName)
         {
             string filePath = Path.Combine(GetModDirectoryPath(modName), "common", "setup.txt");
             string fileContent =
                 "country = {" + Environment.NewLine +
                 "  countries = {" + Environment.NewLine;
 
-            foreach (Country country in countries)
+            foreach (Country country in entityManager.GetCountries())
             {
                 fileContent += $"    {country.Id} = {{ # " + country.Name + Environment.NewLine;
 
