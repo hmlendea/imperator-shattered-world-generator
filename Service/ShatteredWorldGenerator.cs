@@ -7,7 +7,7 @@ using ImperatorShatteredWorldGenerator.Service.Models;
 
 namespace ImperatorShatteredWorldGenerator.Service
 {
-    public sealed class Generator
+    public sealed class ShatteredWorldGenerator : IShatteredWorldGenerator
     {
         const int CapitalPopulation = 10;
 
@@ -37,7 +37,7 @@ namespace ImperatorShatteredWorldGenerator.Service
         IList<string> governmentIds;
         IList<string> diplomaticStanceIds;
 
-        public Generator(
+        public ShatteredWorldGenerator(
             IEntityGenerator entityGenerator,
             IEntitiesLoader entitiesLoader,
             IModWriter modWriter,
