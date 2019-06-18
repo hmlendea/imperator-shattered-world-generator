@@ -1,5 +1,7 @@
 ﻿using System;
 
+using Microsoft.Extensions.DependencyInjection;
+
 using NuciCLI;
 
 using ImperatorShatteredWorldGenerator.Service;
@@ -16,28 +18,33 @@ namespace ImperatorShatteredWorldGenerator
         {
             string gameDirectory = CliArgumentsReader.GetOptionValue(args, ImperatorDirectoryPathOptions);
             string modName = CliArgumentsReader.GetOptionValue(args, ModNameOptions);
+            int seed = GetSeed(args);
 
-            int seed;
+            IServiceProvider serviceProvider = new ServiceCollection()
+                .AddTransient<IRandomNumberGenerator, RandomNumberGenerator>(s => new RandomNumberGenerator(seed))
+                .AddSingleton<IEntitiesLoader, EntitiesLoader>(s => new EntitiesLoader(gameDirectory))
+                .AddSingleton<IEntityGenerator, EntityGenerator>()
+                .AddSingleton<IModWriter, ModWriter>()
+                .AddSingleton<IShatteredWorldGenerator, ShatteredWorldGenerator>()
+                .BuildServiceProvider();
 
+            IShatteredWorldGenerator generator = serviceProvider.GetService<IShatteredWorldGenerator>();
+
+            Console.WriteLine($"Generating a shattered world using the seed '{seed}'...");
+            generator.Generate(modName);
+            Console.WriteLine($"Done!");
+        }
+
+        static int GetSeed(string[] args)
+        {
             if (CliArgumentsReader.HasOption(args, SeedOptions))
             {
-                seed = int.Parse(CliArgumentsReader.GetOptionValue(args, SeedOptions));
+                return int.Parse(CliArgumentsReader.GetOptionValue(args, SeedOptions));
             }
             else
             {
-                seed = new Random().Next();
+                return new Random().Next();
             }
-
-            IRandomNumberGenerator rng = new RandomNumberGenerator(seed);
-            IEntityGenerator entityGenerator = new EntityGenerator(rng);
-            IEntitiesLoader entitiesLoader = new EntitiesLoader(gameDirectory);
-            IModWriter modWriter = new ModWriter();
-
-            Generator generator = new Generator(entityGenerator, entitiesLoader, modWriter, rng);
-
-            Console.WriteLine($"Generating a shattered world using the seed '{rng.Seed}'...");
-            generator.Generate(modName);
-            Console.WriteLine($"Done!");
         }
     }
 }
