@@ -31,7 +31,9 @@ namespace ImperatorShatteredWorldGenerator.Service.Models
         public bool IsHabitable =>
             !string.IsNullOrWhiteSpace(CultureId) &&
             !string.IsNullOrWhiteSpace(ReligionId) &&
-            !string.IsNullOrWhiteSpace(TradeGoodId);
+            !string.IsNullOrWhiteSpace(TradeGoodId) &&
+            !string.IsNullOrWhiteSpace(NameId) &&
+            !string.IsNullOrWhiteSpace(ProvinceId);
             
     }
 }

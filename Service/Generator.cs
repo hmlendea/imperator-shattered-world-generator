@@ -9,6 +9,8 @@ namespace ImperatorShatteredWorldGenerator.Service
 {
     public sealed class Generator
     {
+        const int CapitalPopulation = 10;
+
         const int CityPopulationMin = 4;
         const int CityPopulationMax = 12;
 
@@ -16,7 +18,7 @@ namespace ImperatorShatteredWorldGenerator.Service
         const int CityCivilizationMax = 20;
 
         const int CityBarbarianLevelMin = 0;
-        const int CityBarbarianLevelMax = 5;
+        const int CityBarbarianLevelMax = 0;
 
         const int CountryCentralisationMin = 0;
         const int CountryCentralisationMax = 100;
@@ -52,7 +54,8 @@ namespace ImperatorShatteredWorldGenerator.Service
         public void Generate(string modDirectory)
         {
             ProcessCities();
-            GenerateCountries();
+            GenerateNewCountries();
+            ProcessCountries();
 
             modWriter.CreateMod(modDirectory, cities.Values, countries);
         }
@@ -75,17 +78,11 @@ namespace ImperatorShatteredWorldGenerator.Service
                 city.ReligionId = religionIds.GetRandomElement(rng.Randomiser);
                 city.CultureId = cultureIds.GetRandomElement(rng.Randomiser);
                 city.CivilizationLevel = rng.Get(CityCivilizationMin, CityCivilizationMax);
-                //city.BarbarianLevel = rng.Get(CityBarbarianLevelMin, CityBarbarianLevelMax);
-            }
-
-            foreach (Country country in countries)
-            {
-                cities[country.CapitalId].CultureId = country.CultureId;
-                cities[country.CapitalId].ReligionId = country.ReligionId;
+                city.BarbarianLevel = rng.Get(CityBarbarianLevelMin, CityBarbarianLevelMax);
             }
         }
 
-        void GenerateCountries()
+        void GenerateNewCountries()
         {
             IList<string> validCityIds = cities.Values
                 .Where(city =>
@@ -98,7 +95,7 @@ namespace ImperatorShatteredWorldGenerator.Service
                 .Select(x => x.Id)
                 .ToList();
 
-            for (int i = 0; i < 1500; i++)
+            for (int i = 0; i < 1000; i++)
             {
                 City city = cities[validCityIds.GetRandomElement(rng.Randomiser)];
                 Country country = new Country();
@@ -123,6 +120,17 @@ namespace ImperatorShatteredWorldGenerator.Service
             }
         }
 
+        void ProcessCountries()
+        {
+            foreach (Country country in countries)
+            {
+                cities[country.CapitalId].CultureId = country.CultureId;
+                cities[country.CapitalId].ReligionId = country.ReligionId;
+                
+                SetCityPopulation(country.CapitalId, CapitalPopulation);
+            }
+        }
+
         void SetCityPopulation(City city)
         {
             city.CitizensCount = 0;
@@ -136,8 +144,20 @@ namespace ImperatorShatteredWorldGenerator.Service
             {
                 return;
             }
+            
+            SetCityPopulation(city.Id, populationCount);
+        }
 
-            for (int i = 0; i < populationCount; i++)
+        void SetCityPopulation(string cityId, int amount)
+        {
+            City city = cities[cityId];
+            
+            city.CitizensCount = 0;
+            city.FreemenCount = 0;
+            city.TribesmenCount = 0;
+            city.SlavesCount = 0;
+
+            for (int i = 0; i < amount; i++)
             {
                 int randomPop = rng.Get(0, 3);
 

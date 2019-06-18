@@ -16,6 +16,11 @@ namespace ImperatorShatteredWorldGenerator.Service
 
         public int Get(int min, int max)
         {
+            if (min == max)
+            {
+                return max;
+            }
+
             return Randomiser.Next(min, max + 1);
         }
     }

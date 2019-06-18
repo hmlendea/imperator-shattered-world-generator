@@ -75,15 +75,30 @@ namespace ImperatorShatteredWorldGenerator.Service
         void WriteProvincesSetup(string modName, IEnumerable<City> cities)
         {
             string filePath = Path.Combine(GetModDirectoryPath(modName), "common", "province_setup.csv");
+            string fileContent = "#ProvID;Culture;Religion;TradeGoods;Citizens;Freedmen;Slaves;Tribesmen;Civilization;Barbarian;NameRef;AraRef" + Environment.NewLine;
 
             IRepository<CityEntity> repo = new CsvRepository<CityEntity>(filePath);
 
             foreach (City city in cities)
             {
                 repo.Add(city.ToDataObject());
-            }
 
-            repo.ApplyChanges();
+                fileContent +=
+                    $"{city.Id}," +
+                    $"{city.CultureId}," +
+                    $"{city.ReligionId}," +
+                    $"{city.TradeGoodId}," +
+                    $"{city.CitizensCount}," +
+                    $"{city.FreemenCount}," +
+                    $"{city.TribesmenCount}," +
+                    $"{city.SlavesCount}," +
+                    $"{city.CivilizationLevel}," +
+                    $"{city.BarbarianLevel}," +
+                    $"{city.NameId}," +
+                    $"{city.ProvinceId}" + Environment.NewLine;
+            }
+            
+            WriteUnicodeFile(filePath, fileContent);
         }
 
         void WriteCountryFiles(string modName, IEnumerable<Country> countries)
