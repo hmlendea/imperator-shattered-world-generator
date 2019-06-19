@@ -1,38 +1,31 @@
 using NuciExtensions;
 
+using ImperatorShatteredWorldGenerator.Configuration;
 using ImperatorShatteredWorldGenerator.Service.Models;
 
 namespace ImperatorShatteredWorldGenerator.Service
 {
     public sealed class CityGenerator : ICityGenerator
     {
-        const int CapitalPopulation = 10;
-
-        const int CityPopulationMin = 4;
-        const int CityPopulationMax = 12;
-
-        const int CityCivilizationMin = 0;
-        const int CityCivilizationMax = 20;
-
-        const int CityBarbarianLevelMin = 0;
-        const int CityBarbarianLevelMax = 0;
-
         readonly IEntityManager entityManager;
         readonly IRandomNumberGenerator rng;
+        readonly GeneratorSettings settings;
 
         public CityGenerator(
             IEntityManager entityManager,
-            IRandomNumberGenerator rng)
+            IRandomNumberGenerator rng,
+            GeneratorSettings settings)
         {
             this.entityManager = entityManager;
             this.rng = rng;
+            this.settings = settings;
         }
 
         public City GenerateCapital(Country country)
         {
             City city = GenerateCity(country.CapitalId);
 
-            SetCityPopulation(city, CapitalPopulation);
+            SetCityPopulation(city, settings.CapitalPopulation);
 
             city.CultureId = country.CultureId;
             city.ReligionId = country.ReligionId;
@@ -44,13 +37,13 @@ namespace ImperatorShatteredWorldGenerator.Service
         {
             City city = entityManager.GetCity(id);
 
-            SetCityPopulation(city, CityPopulationMin, CityPopulationMax);
+            SetCityPopulation(city, settings.CityPopulationMin, settings.CityPopulationMax);
 
             city.CultureId = entityManager.GetCultureIds().GetRandomElement(rng.Randomiser);
             city.ReligionId = entityManager.GetReligionIds().GetRandomElement(rng.Randomiser);
 
-            city.CivilizationLevel = rng.Get(CityCivilizationMin, CityCivilizationMax);
-            city.BarbarianLevel = rng.Get(CityBarbarianLevelMin, CityBarbarianLevelMax);
+            city.CivilizationLevel = rng.Get(settings.CityBarbarianLevelMin, settings.CityCivilisationLevelMax);
+            city.BarbarianLevel = rng.Get(settings.CityBarbarianLevelMin, settings.CityBarbarianLevelMax);
 
             return city;
         }

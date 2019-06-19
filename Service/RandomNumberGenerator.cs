@@ -1,17 +1,16 @@
 using System;
 
+using ImperatorShatteredWorldGenerator.Configuration;
+
 namespace ImperatorShatteredWorldGenerator.Service
 {
     public sealed class RandomNumberGenerator : IRandomNumberGenerator
     {
         public Random Randomiser { get; }
 
-        public int Seed { get; }
-
-        public RandomNumberGenerator(int seed)
+        public RandomNumberGenerator(GeneratorSettings settings)
         {
-            Randomiser = new Random(seed);
-            Seed = seed;
+            Randomiser = new Random(settings.Seed);
         }
 
         public int Get(int min, int max)

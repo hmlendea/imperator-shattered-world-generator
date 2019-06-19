@@ -2,27 +2,28 @@ using System.Linq;
 
 using NuciExtensions;
 
+using ImperatorShatteredWorldGenerator.Configuration;
 using ImperatorShatteredWorldGenerator.Service.Models;
 
 namespace ImperatorShatteredWorldGenerator.Service
 {
     public sealed class CountryGenerator : ICountryGenerator
     {
-        const int CountryCentralisationMin = 0;
-        const int CountryCentralisationMax = 100;
-        
         readonly static string AllowedCapitalIdCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         readonly static string[] DisallowedCountryIds = { "REB", "PIR", "BAR", "MER" };
 
         readonly IEntityManager entityManager;
         readonly IRandomNumberGenerator rng;
+        readonly GeneratorSettings settings;
 
         public CountryGenerator(
             IEntityManager entityManager,
-            IRandomNumberGenerator rng)
+            IRandomNumberGenerator rng,
+            GeneratorSettings settings)
         {
             this.entityManager = entityManager;
             this.rng = rng;
+            this.settings = settings;
         }
 
         public Country GenerateCountry(string capitalCityId)
@@ -38,7 +39,7 @@ namespace ImperatorShatteredWorldGenerator.Service
 
             country.GovernmentId = entityManager.GetGovernmentIds().GetRandomElement(rng.Randomiser);
             country.DiplomaticStanceId = entityManager.GetDiplomaticStanceIds().GetRandomElement(rng.Randomiser);
-            country.CentralisationLevel = rng.Get(CountryCentralisationMin, CountryCentralisationMax);
+            country.CentralisationLevel = rng.Get(settings.CountryCentralisationLevelMin, settings.CountryCentralisationLevelMax);
             country.CapitalId = capital.Id;
 
             country.ColourRed = rng.Get(0, 255);
