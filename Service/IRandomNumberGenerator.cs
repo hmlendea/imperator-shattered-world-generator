@@ -6,8 +6,6 @@ namespace ImperatorShatteredWorldGenerator.Service
     {
         Random Randomiser { get; }
 
-        int Seed { get; }
-
         int Get(int min, int max);
     }
 }

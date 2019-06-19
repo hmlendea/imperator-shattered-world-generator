@@ -3,42 +3,43 @@ using System.Linq;
 
 using NuciExtensions;
 
+using ImperatorShatteredWorldGenerator.Configuration;
 using ImperatorShatteredWorldGenerator.Service.Models;
 
 namespace ImperatorShatteredWorldGenerator.Service
 {
     public sealed class ShatteredWorldGenerator : IShatteredWorldGenerator
     {
-        const int RandomCountriesCount = 500;
-
         readonly IEntityManager entityManager;
         readonly ICityGenerator cityGenerator;
         readonly ICountryGenerator countryGenerator;
         readonly IModWriter modWriter;
-
         readonly IRandomNumberGenerator rng;
+        readonly GeneratorSettings settings;
 
         public ShatteredWorldGenerator(
             IEntityManager entityManager,
             ICityGenerator cityGenerator,
             ICountryGenerator countryGenerator,
             IModWriter modWriter,
-            IRandomNumberGenerator rng)
+            IRandomNumberGenerator rng,
+            GeneratorSettings settings)
         {
             this.entityManager = entityManager;
             this.cityGenerator = cityGenerator;
             this.countryGenerator = countryGenerator;
             this.modWriter = modWriter;
             this.rng = rng;
+            this.settings = settings;
         }
 
-        public void Generate(string modDirectory)
+        public void Generate()
         {
             GenerateCities();
             GenerateCountries();
             GenerateCapitals();
 
-            modWriter.CreateMod(modDirectory);
+            modWriter.CreateMod();
         }
 
         void GenerateCities()
@@ -64,7 +65,7 @@ namespace ImperatorShatteredWorldGenerator.Service
                 .Select(x => x.Id)
                 .ToList();
 
-            for (int i = 0; i < RandomCountriesCount; i++)
+            for (int i = 0; i < settings.RandomCountriesCount; i++)
             {
                 string cityId = validCityIds.GetRandomElement(rng.Randomiser);
                 Country country = countryGenerator.GenerateCountry(cityId);

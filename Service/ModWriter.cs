@@ -7,6 +7,7 @@ using System.Text;
 using NuciDAL.Repositories;
 using NuciExtensions;
 
+using ImperatorShatteredWorldGenerator.Configuration;
 using ImperatorShatteredWorldGenerator.DataAccess.DataObjects;
 using ImperatorShatteredWorldGenerator.Service.Mapping;
 using ImperatorShatteredWorldGenerator.Service.Models;
@@ -16,44 +17,47 @@ namespace ImperatorShatteredWorldGenerator.Service
     public sealed class ModWriter : IModWriter
     {
         readonly IEntityManager entityManager;
+        readonly GeneratorSettings settings;
 
-        public ModWriter(IEntityManager entityManager)
+        public ModWriter(
+            IEntityManager entityManager,
+            GeneratorSettings settings)
         {
             this.entityManager = entityManager;
+            this.settings = settings;
         }
 
-        public void CreateMod(string modName)
+        public void CreateMod()
         {
-            PrepareDirectoryStructure(modName);
-            CreateModMetadata(modName);
+            PrepareDirectoryStructure();
+            WriteModDescriptor();
 
-            WriteProvincesSetup(modName);
-            WriteCountryFiles(modName);
-            WriteCountriesDefinitionIndexFile(modName);
-            WriteCountriesLocalisationFile(modName);
-            WriteSetupFile(modName);
-            WriteEventsFile(modName);
-            WriteDefinesFile(modName);
+            WriteProvincesSetup();
+            WriteCountryFiles();
+            WriteCountriesDefinitionIndexFile();
+            WriteCountriesLocalisationFile();
+            WriteSetupFile();
+            WriteEventsFile();
+            WriteDefinesFile();
         }
 
-        void PrepareDirectoryStructure(string modName)
+        void PrepareDirectoryStructure()
         {
-            string modPath = GetModDirectoryPath(modName);
+            string modPath = settings.ModDirectoryPath;
             string modCommonDir = Path.Combine(modPath, "common");
             string modEventsDir = Path.Combine(modPath, "events");
             string modDefinesDir = Path.Combine(modCommonDir, "defines");
             string modCountriesDir = Path.Combine(modCommonDir, "countries");
             string modLocalisationDir = Path.Combine(modPath, "localization");
-            string modFilePath = GetModFilePath(modName);
 
             if (Directory.Exists(modPath))
             {
                 Directory.Delete(modPath, true);
             }
 
-            if (File.Exists(modFilePath))
+            if (File.Exists(settings.ModFilePath))
             {
-                File.Delete(modFilePath);
+                File.Delete(settings.ModFilePath);
             }
             
             Directory.CreateDirectory(modDefinesDir);
@@ -62,23 +66,21 @@ namespace ImperatorShatteredWorldGenerator.Service
             Directory.CreateDirectory(modLocalisationDir);
         }
 
-        void CreateModMetadata(string modName)
+        void WriteModDescriptor()
         {
-            string modDirectoryName = GetModDirectoryName(modName);
-            string modFilePath = GetModFilePath(modName);
-            string descriptorFilePath = Path.Combine(GetModDirectoryPath(modName), "descriptor.mod");
+            string descriptorFilePath = Path.Combine(settings.ModDirectoryPath, "descriptor.mod");
 
             string fileContent =
-                $"name = \"{modName}\"" + Environment.NewLine +
-                $"path = \"mod/{modDirectoryName}\"";
+                $"name = \"{settings.ModName}\"" + Environment.NewLine +
+                $"path = \"mod/{settings.ModId}\"";
 
-            WriteFile(modFilePath, fileContent);
+            WriteFile(settings.ModFilePath, fileContent);
             WriteFile(descriptorFilePath, fileContent);
         }
 
-        void WriteProvincesSetup(string modName)
+        void WriteProvincesSetup()
         {
-            string filePath = Path.Combine(GetModDirectoryPath(modName), "common", "province_setup.csv");
+            string filePath = Path.Combine(settings.ModDirectoryPath, "common", "province_setup.csv");
             string fileContent = "#ProvID;Culture;Religion;TradeGoods;Citizens;Freedmen;Slaves;Tribesmen;Civilization;Barbarian;NameRef;AraRef" + Environment.NewLine;
 
             IRepository<CityEntity> repo = new CsvRepository<CityEntity>(filePath);
@@ -105,9 +107,9 @@ namespace ImperatorShatteredWorldGenerator.Service
             WriteUnicodeFile(filePath, fileContent);
         }
 
-        void WriteCountryFiles(string modName)
+        void WriteCountryFiles()
         {
-            string dirPath = Path.Combine(GetModDirectoryPath(modName), "common", "countries");
+            string dirPath = Path.Combine(settings.ModDirectoryPath, "common", "countries");
 
             foreach (Country country in entityManager.GetCountries())
             {
@@ -123,9 +125,9 @@ namespace ImperatorShatteredWorldGenerator.Service
             }
         }
 
-        void WriteCountriesDefinitionIndexFile(string modName)
+        void WriteCountriesDefinitionIndexFile()
         {
-            string filePath = Path.Combine(GetModDirectoryPath(modName), "common", "countries.txt");
+            string filePath = Path.Combine(settings.ModDirectoryPath, "common", "countries.txt");
             string fileContent =
                 "REB = \"countries/rebels.txt\"" + Environment.NewLine +
                 "PIR = \"countries/pirates.txt\"" + Environment.NewLine +
@@ -140,9 +142,9 @@ namespace ImperatorShatteredWorldGenerator.Service
             WriteUnicodeFile(filePath, fileContent);
         }
 
-        void WriteCountriesLocalisationFile(string modName)
+        void WriteCountriesLocalisationFile()
         {
-            string filePath = Path.Combine(GetModDirectoryPath(modName), "localization", "SW_countries_l_english.yml");
+            string filePath = Path.Combine(settings.ModDirectoryPath, "localization", "SW_countries_l_english.yml");
             string fileContent = "l_english:" + Environment.NewLine;
 
             foreach (Country country in entityManager.GetCountries().Where(c => !c.IsVanilla))
@@ -153,9 +155,9 @@ namespace ImperatorShatteredWorldGenerator.Service
             WriteUnicodeFile(filePath, fileContent);
         }
 
-        void WriteSetupFile(string modName)
+        void WriteSetupFile()
         {
-            string filePath = Path.Combine(GetModDirectoryPath(modName), "common", "setup.txt");
+            string filePath = Path.Combine(settings.ModDirectoryPath, "common", "setup.txt");
             string fileContent =
                 "country = {" + Environment.NewLine +
                 "  countries = {" + Environment.NewLine;
@@ -199,9 +201,9 @@ namespace ImperatorShatteredWorldGenerator.Service
             WriteFile(filePath, fileContent);
         }
 
-        void WriteEventsFile(string modName)
+        void WriteEventsFile()
         {
-            string filePath = Path.Combine(GetModDirectoryPath(modName), "events", "flavor_sel.txt");
+            string filePath = Path.Combine(settings.ModDirectoryPath, "events", "flavor_sel.txt");
             string fileContent =
                 "namespace = grinsel" + Environment.NewLine +
                 "grinsel.2 = {" + Environment.NewLine +
@@ -226,36 +228,15 @@ namespace ImperatorShatteredWorldGenerator.Service
             WriteUnicodeFile(filePath, fileContent);
         }
 
-        void WriteDefinesFile(string modName)
+        void WriteDefinesFile()
         {
-            string filePath = Path.Combine(GetModDirectoryPath(modName), "common", "defines", "00_defines.txt");
+            string filePath = Path.Combine(settings.ModDirectoryPath, "common", "defines", "00_defines.txt");
             string fileContent =
                 "NGame = {" + Environment.NewLine +
                 "  START_DATE = \"001.10.1\"" + Environment.NewLine +
                 "}";
             
             WriteUnicodeFile(filePath, fileContent);
-        }
-
-        string GetModFilePath(string modName)
-        {
-            return GetModDirectoryPath(modName) + ".mod";
-        }
-
-        string GetModDirectoryPath(string modName)
-        {
-            string modDirName = GetModDirectoryName(modName);
-                
-            return Path.Combine(Environment.CurrentDirectory, "out", modDirName);
-        }
-
-        string GetModDirectoryName(string modName)
-        {
-            return modName
-                .RemovePunctuation()
-                .RemoveDiacritics()
-                .Replace(" ", "-")
-                .ToLower();
         }
 
         void WriteFile(string path, string content)

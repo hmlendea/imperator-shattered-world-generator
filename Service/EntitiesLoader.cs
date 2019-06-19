@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 
 using NuciDAL.Repositories;
 
+using ImperatorShatteredWorldGenerator.Configuration;
 using ImperatorShatteredWorldGenerator.DataAccess.DataObjects;
 using ImperatorShatteredWorldGenerator.Service.Mapping;
 using ImperatorShatteredWorldGenerator.Service.Models;
@@ -12,16 +13,16 @@ namespace ImperatorShatteredWorldGenerator.Service
 {
     public sealed class EntitiesLoader : IEntityLoader
     {
-        readonly string gameDirectory;
+        readonly GeneratorSettings settings;
 
-        public EntitiesLoader(string gameDirectory)
+        public EntitiesLoader(GeneratorSettings settings)
         {
-            this.gameDirectory = gameDirectory;
+            this.settings = settings;
         }
 
         public IEnumerable<City> LoadCities()
         {
-            string citiesFilePath = Path.Combine(gameDirectory, "game", "common", "province_setup.csv");
+            string citiesFilePath = Path.Combine(settings.GameDirectoryPath, "game", "common", "province_setup.csv");
             IRepository<CityEntity> vanillaCityRepository = new CsvRepository<CityEntity>(citiesFilePath);
 
             return vanillaCityRepository.GetAll().ToServiceModels();
@@ -38,9 +39,9 @@ namespace ImperatorShatteredWorldGenerator.Service
             const string CapitalRegexPattern = "^\\t\\t\\tcapital\\s*=\\s*([0-9]*)";
             const string ColourRegexPattern = "rgb\\s*{\\s*([0-9]*)\\s*([0-9]*)\\s*([0-9]*)\\s*}";
 
-            string setupFilePath = Path.Combine(gameDirectory, "game", "common", "setup.txt");
-            string localisationFilePath = Path.Combine(gameDirectory, "game", "localization", "english", "countries_l_english.yml");
-            string countriesFilePath = Path.Combine(gameDirectory, "game", "common", "countries.txt");
+            string setupFilePath = Path.Combine(settings.GameDirectoryPath, "game", "common", "setup.txt");
+            string localisationFilePath = Path.Combine(settings.GameDirectoryPath, "game", "localization", "english", "countries_l_english.yml");
+            string countriesFilePath = Path.Combine(settings.GameDirectoryPath, "game", "common", "countries.txt");
             
             IList<Country> countries = new List<Country>();
             IList<string> lines = File.ReadAllLines(setupFilePath);
@@ -154,7 +155,7 @@ namespace ImperatorShatteredWorldGenerator.Service
                             continue;
                         }
 
-                        string countryFilePath = Path.Combine(gameDirectory, "game", "common", fileMatch.Groups[1].Value);
+                        string countryFilePath = Path.Combine(settings.GameDirectoryPath, "game", "common", fileMatch.Groups[1].Value);
                         string countryFileContent = File.ReadAllText(countryFilePath);
 
                         Match colourMatch = Regex.Match(countryFileContent, ColourRegexPattern);
@@ -177,7 +178,7 @@ namespace ImperatorShatteredWorldGenerator.Service
         {
             const string ReligionIdRegexPattern = "^([^#\\s]*)\\s*=\\s*{";
 
-            string religionsFilePath = Path.Combine(gameDirectory, "game", "common", "religions", "00_default.txt");
+            string religionsFilePath = Path.Combine(settings.GameDirectoryPath, "game", "common", "religions", "00_default.txt");
             IEnumerable<string> lines = File.ReadAllLines(religionsFilePath);
             IList<string> religionIds = new List<string>();
 
@@ -202,7 +203,7 @@ namespace ImperatorShatteredWorldGenerator.Service
 
             IList<string> cultureIds = new List<string>();
 
-            string culturesDirPath = Path.Combine(gameDirectory, "game", "common", "cultures");
+            string culturesDirPath = Path.Combine(settings.GameDirectoryPath, "game", "common", "cultures");
             DirectoryInfo dir = new DirectoryInfo(culturesDirPath);
 
             foreach (FileInfo file in dir.GetFiles("*.txt"))
@@ -231,7 +232,7 @@ namespace ImperatorShatteredWorldGenerator.Service
 
             IList<string> governmentIds = new List<string>();
 
-            string governmentsDirPath = Path.Combine(gameDirectory, "game", "common", "governments");
+            string governmentsDirPath = Path.Combine(settings.GameDirectoryPath, "game", "common", "governments");
             DirectoryInfo dir = new DirectoryInfo(governmentsDirPath);
 
             foreach (FileInfo file in dir.GetFiles("*.txt"))
@@ -260,7 +261,7 @@ namespace ImperatorShatteredWorldGenerator.Service
 
             IList<string> diplomaticStanceIds = new List<string>();
 
-            string diplomaticStancesDirPath = Path.Combine(gameDirectory, "game", "common", "diplomatic_stances");
+            string diplomaticStancesDirPath = Path.Combine(settings.GameDirectoryPath, "game", "common", "diplomatic_stances");
             DirectoryInfo dir = new DirectoryInfo(diplomaticStancesDirPath);
 
             foreach (FileInfo file in dir.GetFiles("*.txt"))
