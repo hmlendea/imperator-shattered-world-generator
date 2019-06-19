@@ -8,7 +8,7 @@ Tool for generating Shattered World mods for Imperator: Rome
 
 The generator is used as just another console application.
 
-Open a terminal and run the executable, making sure that all the desired arguments are supplied
+Open a terminal and run the `ImperatorShatteredWorldGenerator` executable, making sure that all the desired arguments are supplied.
 
 # Configuration
 
