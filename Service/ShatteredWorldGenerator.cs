@@ -53,6 +53,11 @@ namespace ImperatorShatteredWorldGenerator.Service
 
         void GenerateCountries()
         {
+            if (settings.RandomCountriesCount == 0)
+            {
+                return;
+            }
+            
             IList<string> validCityIds = entityManager
                 .GetCities()
                 .Where(city =>
