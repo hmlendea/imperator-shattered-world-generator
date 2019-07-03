@@ -22,6 +22,14 @@ namespace ImperatorShatteredWorldGenerator.Configuration
         static string[] CountryCentralisationLevelMaxOptions = new string[] { "--country-centralisation-max", "--country-cent-max" };
         static string[] RandomCountriesCountOptions = new string[] { "--random-countries", "--new-countries", "--rng-countries" };
 
+        static string[] defaultGameDirPaths = new string[]
+        {
+            "C:\\Program Files (x86)\\Steam\\steamapps\\common\\ImperatorRome",
+            "C:\\Program Files\\Steam\\steamapps\\common\\ImperatorRome",
+            "~/.steam/steam/steamapps/common/ImperatorRome",
+            "~/Library/Application Support/Steam/SteamApps/common/ImperatorRome"
+        };
+
         public int Seed { get; set; }
 
         public string GameDirectoryPath { get; set; }
@@ -87,7 +95,7 @@ namespace ImperatorShatteredWorldGenerator.Configuration
             }
 
             settings.GameDirectoryPath = CliArgumentsReader.GetOptionValue(args, ImperatorDirectoryPathOptions);
-            settings.ModName = CliArgumentsReader.GetOptionValue(args, ModNameOptions);
+            settings.ModName = GetGameDirectoryPath(args);
 
             if (CliArgumentsReader.HasOption(args, CapitalPopulationOptions))
             {
@@ -140,6 +148,24 @@ namespace ImperatorShatteredWorldGenerator.Configuration
             }
 
             return settings;
+        }
+
+        static string GetGameDirectoryPath(string[] args)
+        {
+            if (CliArgumentsReader.HasOption(ImperatorDirectoryPathOptions))
+            {
+                return CliArgumentsReader.GetOptionValue(args);
+            }
+
+            foreach (string gameDirPath in defaultGameDirPaths)
+            {
+                if (Directory.Exists(gameDirPath))
+                {
+                    return gameDirPath;
+                }
+            }
+
+            return null;
         }
     }
 }
