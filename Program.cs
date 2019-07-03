@@ -4,12 +4,12 @@ using Microsoft.Extensions.DependencyInjection;
 
 using ImperatorShatteredWorldGenerator.Configuration;
 using ImperatorShatteredWorldGenerator.Service;
+using ImperatorShatteredWorldGenerator.Service.Generators;
 
 namespace ImperatorShatteredWorldGenerator
 {
     class Program
     {
-
         static void Main(string[] args)
         {
             GeneratorSettings settings = GeneratorSettings.LoadFromArguments(args);

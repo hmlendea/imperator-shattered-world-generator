@@ -1,6 +1,6 @@
 using ImperatorShatteredWorldGenerator.Service.Models;
 
-namespace ImperatorShatteredWorldGenerator.Service
+namespace ImperatorShatteredWorldGenerator.Service.Generators
 {
     public interface ICountryGenerator
     {

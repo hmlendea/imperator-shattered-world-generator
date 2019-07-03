@@ -5,7 +5,7 @@ using NuciExtensions;
 using ImperatorShatteredWorldGenerator.Configuration;
 using ImperatorShatteredWorldGenerator.Service.Models;
 
-namespace ImperatorShatteredWorldGenerator.Service
+namespace ImperatorShatteredWorldGenerator.Service.Generators
 {
     public sealed class CountryGenerator : ICountryGenerator
     {

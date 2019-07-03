@@ -1,6 +1,6 @@
 using System;
 
-namespace ImperatorShatteredWorldGenerator.Service
+namespace ImperatorShatteredWorldGenerator.Service.Generators
 {
     public interface IRandomNumberGenerator
     {

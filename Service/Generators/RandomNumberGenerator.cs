@@ -2,7 +2,7 @@ using System;
 
 using ImperatorShatteredWorldGenerator.Configuration;
 
-namespace ImperatorShatteredWorldGenerator.Service
+namespace ImperatorShatteredWorldGenerator.Service.Generators
 {
     public sealed class RandomNumberGenerator : IRandomNumberGenerator
     {

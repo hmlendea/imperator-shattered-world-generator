@@ -1,4 +1,4 @@
-namespace ImperatorShatteredWorldGenerator.Service
+namespace ImperatorShatteredWorldGenerator.Service.Generators
 {
     public interface IShatteredWorldGenerator
     {
