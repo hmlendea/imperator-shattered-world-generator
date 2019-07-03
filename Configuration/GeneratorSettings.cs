@@ -20,7 +20,7 @@ namespace ImperatorShatteredWorldGenerator.Configuration
         static string[] CityBarbarianLevelMaxOptions = new string[] { "--city-barbarian-max", "--city-barb-max" };
         static string[] CountryCentralisationLevelMinOptions = new string[] { "--country-centralisation-min", "--country-cent-min" };
         static string[] CountryCentralisationLevelMaxOptions = new string[] { "--country-centralisation-max", "--country-cent-max" };
-        static string[] RandomCountriesCountOptions = new string[] { "--random-countries", "--new-countries", "--rng-countries" };
+        static string[] RandomCountriesCountOptions = new string[] { "--new-countries-count", "--rng-countries-count" };
 
         static string[] defaultGameDirPaths = new string[]
         {
