@@ -8,7 +8,7 @@ namespace ImperatorShatteredWorldGenerator.Configuration
 {
     public sealed class GeneratorSettings
     {
-        static string[] ImperatorDirectoryPathOptions = new string[] { "-d", "--dir", "--game", "--imperator" };
+        static string[] GameDirectoryPathOptions = new string[] { "-d", "--dir", "--game", "--imperator" };
         static string[] ModNameOptions = new string[] { "-n", "--name" };
         static string[] SeedOptions = new string[] { "-s", "--seed" };
         static string[] CapitalPopulationOptions = new string[] { "--capital-population", "--capital-pops" };
@@ -94,8 +94,8 @@ namespace ImperatorShatteredWorldGenerator.Configuration
                 settings.Seed = int.Parse(CliArgumentsReader.GetOptionValue(args, SeedOptions));
             }
 
-            settings.GameDirectoryPath = CliArgumentsReader.GetOptionValue(args, ImperatorDirectoryPathOptions);
-            settings.ModName = GetGameDirectoryPath(args);
+            settings.GameDirectoryPath = GetGameDirectoryPath(args);
+            settings.ModName = CliArgumentsReader.GetOptionValue(args, ModNameOptions);
 
             if (CliArgumentsReader.HasOption(args, CapitalPopulationOptions))
             {
@@ -152,9 +152,9 @@ namespace ImperatorShatteredWorldGenerator.Configuration
 
         static string GetGameDirectoryPath(string[] args)
         {
-            if (CliArgumentsReader.HasOption(ImperatorDirectoryPathOptions))
+            if (CliArgumentsReader.HasOption(args, GameDirectoryPathOptions))
             {
-                return CliArgumentsReader.GetOptionValue(args);
+                return CliArgumentsReader.GetOptionValue(args, GameDirectoryPathOptions);
             }
 
             foreach (string gameDirPath in defaultGameDirPaths)
