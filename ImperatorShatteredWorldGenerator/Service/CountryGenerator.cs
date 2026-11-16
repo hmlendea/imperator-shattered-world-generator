@@ -107,7 +107,7 @@ namespace ImperatorShatteredWorldGenerator.Service
 
                 for (int i = 0; i < 3; i++)
                 {
-                    id += AllowedCapitalIdCharacters.GetRandomElement(rng.Randomiser);
+                    id += AllowedCapitalIdCharacters[rng.Randomiser.Next(AllowedCapitalIdCharacters.Length)];
                 }
             }
 

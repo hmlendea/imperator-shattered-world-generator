@@ -156,10 +156,10 @@ bash ./package.sh <version>
 
 | Package | Version | Scope | Purpose |
 |---------|---------|-------|---------|
-| `Microsoft.Extensions.DependencyInjection` | `2.2.0` | Runtime | Constructs and resolves the application services. |
-| `NuciCLI` | `1.3.0.1` | Runtime | Reads the command-line arguments. |
-| `NuciDAL` | `1.1.0.3` | Runtime | Provides the file-based data access and repository abstractions. |
-| `NuciExtensions` | `1.3.2` | Runtime | Provides string and collection extension methods. |
+| `Microsoft.Extensions.DependencyInjection` | `11.0.0` | Runtime | Constructs and resolves the application services. |
+| `NuciCLI.Arguments` | `1.0.3` | Runtime | Parses the command-line arguments. |
+| `NuciDAL` | `4.3.1` | Runtime | Provides the file-based data access and repository abstractions. |
+| `NuciExtensions` | `6.0.3` | Runtime | Provides string and collection extension methods. |
 
 ## ⚙️ GitHub Actions
 

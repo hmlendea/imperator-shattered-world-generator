@@ -208,7 +208,7 @@ namespace ImperatorShatteredWorldGenerator.UnitTests.Service
 
             Assert.That(
                 () => shatteredWorldGenerator.Generate(),
-                Throws.TypeOf<NullReferenceException>());
+                Throws.TypeOf<InvalidOperationException>());
             entityManager.Verify(manager => manager.AddCountry(It.IsAny<Country>()), Times.Never);
         }
 
@@ -226,7 +226,7 @@ namespace ImperatorShatteredWorldGenerator.UnitTests.Service
 
             Assert.That(
                 () => shatteredWorldGenerator.Generate(),
-                Throws.TypeOf<NullReferenceException>());
+                Throws.TypeOf<InvalidOperationException>());
             entityManager.Verify(manager => manager.AddCountry(It.IsAny<Country>()), Times.Once);
         }
 
