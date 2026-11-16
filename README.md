@@ -30,6 +30,7 @@ Every habitable city receives a randomised population, culture, religion, civili
 - [GitHub Actions](#github-actions)
 - [Project Structure](#project-structure)
   - [Directories](#directories)
+- [Architecture](#architecture)
 - [Contributing](#contributing)
 - [Support](#support)
 - [Project Engagement](#project-engagement)
@@ -198,6 +199,12 @@ The solution contains a single console project, whose namespaces are organised i
 | `ImperatorShatteredWorldGenerator.UnitTests` | Unit tests for the configuration, models, and services. |
 | `ImperatorShatteredWorldGenerator.IntegrationTests` | Tests for the file-system based loaders and the mod writer. |
 | `.github/workflows` | GitHub Actions workflow definitions. |
+
+## 🏗️ Architecture
+
+Imperator Shattered World Generator is a single-process console pipeline in which a dependency-injected composition root loads the vanilla game data, randomises it through dedicated city and country generators, and writes the result as a self-contained mod.
+
+See the [Architecture Documentation](./ARCHITECTURE.md) for the system context, principal components, runtime flows, ownership boundaries, dependencies, constraints, and extension points.
 
 ## 🤝 Contributing
 
