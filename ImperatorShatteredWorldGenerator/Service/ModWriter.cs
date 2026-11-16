@@ -83,7 +83,7 @@ namespace ImperatorShatteredWorldGenerator.Service
             string filePath = Path.Combine(settings.ModDirectoryPath, "common", "province_setup.csv");
             string fileContent = "#ProvID;Culture;Religion;TradeGoods;Citizens;Freedmen;Slaves;Tribesmen;Civilization;Barbarian;NameRef;AraRef" + Environment.NewLine;
 
-            IRepository<CityEntity> repo = new CsvRepository<CityEntity>(filePath);
+            IFileRepository<CityEntity> repo = new CsvRepository<CityEntity>(filePath);
 
             foreach (City city in entityManager.GetCities())
             {

@@ -66,7 +66,7 @@ namespace ImperatorShatteredWorldGenerator.Service
                         country.CapitalId != city.Id &&
                         country.Name != city.NameId))
                 .GroupBy(x => x.NameId)
-                .Select(g => g.GetRandomElement(rng.Randomiser))
+                .Select(g => g.ToList().GetRandomElement(rng.Randomiser))
                 .Select(x => x.Id)
                 .ToList();
 

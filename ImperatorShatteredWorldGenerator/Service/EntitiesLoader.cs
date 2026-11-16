@@ -23,7 +23,7 @@ namespace ImperatorShatteredWorldGenerator.Service
         public IEnumerable<City> LoadCities()
         {
             string citiesFilePath = Path.Combine(settings.GameDirectoryPath, "game", "common", "province_setup.csv");
-            IRepository<CityEntity> vanillaCityRepository = new CsvRepository<CityEntity>(citiesFilePath);
+            IFileRepository<CityEntity> vanillaCityRepository = new CsvRepository<CityEntity>(citiesFilePath);
 
             return vanillaCityRepository.GetAll().ToServiceModels();
         }

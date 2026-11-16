@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization;
 
 using NUnit.Framework;
@@ -68,10 +69,9 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
             List<City> cities = [.. entitiesLoader.LoadCities()];
 
             Assert.That(cities, Has.Count.EqualTo(3));
-            Assert.That(cities[1].Id, Is.EqualTo("2"));
-            Assert.That(cities[1].NameId, Is.EqualTo("Cornova"));
-            Assert.That(cities[2].Id, Is.EqualTo("3"));
-            Assert.That(cities[2].NameId, Is.EqualTo("Solara"));
+            Assert.That(cities.Select(city => city.Id), Is.EquivalentTo(["1", "2", "3"]));
+            Assert.That(cities.Single(city => city.Id == "2").NameId, Is.EqualTo("Cornova"));
+            Assert.That(cities.Single(city => city.Id == "3").NameId, Is.EqualTo("Solara"));
         }
 
         [Test]
