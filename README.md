@@ -18,6 +18,7 @@ Every habitable city receives a randomised population, culture, religion, civili
   - [Manual Installation](#manual-installation)
 - [Configuration](#configuration)
   - [Command-Line Options](#command-line-options)
+- [Privacy and Data](#privacy-and-data)
 - [Development](#development)
   - [Requirements](#requirements)
   - [Setup](#setup)
@@ -96,6 +97,20 @@ The generator is configured entirely through command-line arguments. The game di
 | `--country-centralisation-min`, `--country-cent-min` | Integer | `0` | Minimum centralisation level of countries. |
 | `--country-centralisation-max`, `--country-cent-max` | Integer | `100` | Maximum centralisation level of countries. |
 | `--random-countries`, `--new-countries`, `--rng-countries` | Integer | `500` | Number of new countries to generate. A value of `0` keeps only the vanilla countries. |
+
+## 🛡️ Privacy and Data
+
+Imperator Shattered World Generator runs entirely on your own machine and does not collect, transmit, or store personal data. It performs no analytics, diagnostics, telemetry, or update checks.
+
+For the detailed description of how the application handles privacy and personal data, see the [Privacy Statement](./PRIVACY.md).
+
+The application reads a local Imperator: Rome installation and writes the generated mod to the local working directory. Every value it handles is either a local filesystem path or a command-line configuration value, and all data remains under your direct control.
+
+| Data | Purpose | Storage | Retention | Optional |
+|------|---------|---------|-----------|----------|
+| Game installation path | Locating the vanilla game files to read | Not stored by the application | N/A | No |
+| Mod name and generation settings | Deriving the output directory and generating the mod | Not stored by the application | N/A | No |
+| Generated mod files | The output mod directory and descriptor | Local working directory, under `out/<mod-identifier>/` | Until you delete them or run the generator again | No |
 
 ## 🛠️ Development
 
