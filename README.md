@@ -23,6 +23,7 @@ Every habitable city receives a randomised population, culture, religion, civili
   - [Setup](#setup)
   - [Build](#build)
   - [Run](#run)
+  - [Test](#test)
   - [Release](#release)
   - [Dependencies](#dependencies)
 - [GitHub Actions](#github-actions)
@@ -125,6 +126,14 @@ dotnet build --no-restore
 dotnet run --project ImperatorShatteredWorldGenerator/ImperatorShatteredWorldGenerator.csproj -- --dir "$HOME/.local/share/Steam/steamapps/common/ImperatorRome" --name "Shattered World"
 ```
 
+### Test
+
+```bash
+dotnet test --no-build
+```
+
+The solution contains two test projects. `ImperatorShatteredWorldGenerator.UnitTests` covers the configuration, models, and services in isolation, while `ImperatorShatteredWorldGenerator.IntegrationTests` exercises the file-system based loaders and the mod writer against a temporary game directory.
+
 ### Release
 
 Publish self-contained builds for each supported platform and package them into release archives:
@@ -160,7 +169,7 @@ bash ./package.sh <version>
 
 ## 🗂️ Project Structure
 
-The solution contains a single console project, whose namespaces are organised into configuration, data access, and service folders.
+The solution contains a single console project, whose namespaces are organised into configuration, data access, and service folders, together with a unit test project and an integration test project.
 
 ### Directories
 
@@ -171,6 +180,8 @@ The solution contains a single console project, whose namespaces are organised i
 | `ImperatorShatteredWorldGenerator/Service` | Generation, entity management, and mod writing services. |
 | `ImperatorShatteredWorldGenerator/Service/Mapping` | Mappings between entities and domain models. |
 | `ImperatorShatteredWorldGenerator/Service/Models` | City and country domain models. |
+| `ImperatorShatteredWorldGenerator.UnitTests` | Unit tests for the configuration, models, and services. |
+| `ImperatorShatteredWorldGenerator.IntegrationTests` | Tests for the file-system based loaders and the mod writer. |
 | `.github/workflows` | GitHub Actions workflow definitions. |
 
 ## 🤝 Contributing
