@@ -1,48 +1,203 @@
-[![Build Status](https://travis-ci.com/hmlendea/imperator-shattered-world-generator.svg?branch=master)](https://travis-ci.com/hmlendea/imperator-shattered-world-generator)
+[![Latest Release](https://img.shields.io/github/v/release/hmlendea/imperator-shattered-world-generator)](https://github.com/hmlendea/imperator-shattered-world-generator/releases/latest)
+[![Build Status](https://github.com/hmlendea/imperator-shattered-world-generator/actions/workflows/dotnet.yml/badge.svg)](https://github.com/hmlendea/imperator-shattered-world-generator/actions/workflows/dotnet.yml)
+[![License](https://img.shields.io/github/license/hmlendea/imperator-shattered-world-generator)](https://github.com/hmlendea/imperator-shattered-world-generator/blob/master/LICENSE)
 
-# About
+# Imperator Shattered World Generator
 
-Tool for generating Shattered World mods for Imperator: Rome
+A .NET console application that rewrites the vanilla Imperator: Rome map into a shattered world mod by randomising cities and generating new countries.
 
-# Usage
+Every habitable city receives a randomised population, culture, religion, civilisation level, and barbarian level. The vanilla countries keep their capitals but lose all other regions, and additional countries are created from vacant cities, each with a generated name, government, diplomatic stance, and centralisation level. The result is written to a mod directory together with its descriptor, localisation, and event files.
 
-The generator is used as just another console application.
+## 📑 Table of Contents
 
-Open a terminal and run the `ImperatorShatteredWorldGenerator` executable, making sure that all the desired arguments are supplied.
+- [Capabilities](#capabilities)
+- [Usage](#usage)
+- [Known Limitations](#known-limitations)
+- [System Requirements](#system-requirements)
+- [Installation](#installation)
+  - [Manual Installation](#manual-installation)
+- [Configuration](#configuration)
+  - [Command-Line Options](#command-line-options)
+- [Development](#development)
+  - [Requirements](#requirements)
+  - [Setup](#setup)
+  - [Build](#build)
+  - [Run](#run)
+  - [Release](#release)
+  - [Dependencies](#dependencies)
+- [GitHub Actions](#github-actions)
+- [Project Structure](#project-structure)
+  - [Directories](#directories)
+- [Contributing](#contributing)
+- [Support](#support)
+- [Project Engagement](#project-engagement)
+- [License](#license)
 
-# Configuration
+## ✨ Capabilities
 
-The generator settings are supplied via CLI arguments
+- Randomises the population, culture, religion, civilisation level, and barbarian level of every habitable vanilla city.
+- Restricts every vanilla country to its capital region and aligns the capital's culture and religion with its country.
+- Generates random countries from vacant cities, including names, governments, diplomatic stances, and centralisation levels.
+- Accepts a fixed random seed so that a generated world can be reproduced exactly.
+- Writes a complete mod directory, consisting of the mod descriptor, provinces setup, country files, localisation, and events.
 
-| Argument                                                 | Description                                | Optional  | Default|
-|----------------------------------------------------------|--------------------------------------------|-----------|--------|
-| -d<br>--dir<br>--game<br>--imperator | Game directory path. Example:<br><sup>`~/.local/share/Steam/steamapps/common/ImperatorRome`</sup> | Mandatory | N/A |
-| -n<br>--name                                             | Name of the output mod                     | Mandatory | N/A    |
-| -s<br>--seed                                             | TNG seed to generate Mod                   | Optional  | Random |
-| --capital-population<br>--capital-pops                   | Amount of pops for capital cities          | Optional  | 10     |
-| --city-population-min<br>--city-pops-min                 | Minimum amount of pops for regular cities  | Optional  | 4      |
-| --city-population-max<br>--city-pops-max                 | Maximum amount of pops for regular cities  | Optional  | 12     |
-| --city-civilisation-min<br>--city-civ-min                | Minimum civilisation level for cities      | Optional  | 0      |
-| --city-civilisation-max<br>--city-civ-max                | Maximum civilisation level for cities      | Optional  | 20     |
-| --city-barbarian-min<br>--city-barb-min                  | Minimum barbarian level for cities         | Optional  | 0      |
-| --city-barbarian-max<br>--city-barb-max                  | Maximum barbarian level for cities         | Optional  | 0      |
-| --country-centralisation-min<br>--country-cent-min       | Minimum centralisation level for countries | Optional  | 0      |
-| --country-centralisation-max<br>--country-cent-max       | Maximum centralisation level for countries | Optional  | 0      |
-| --random-countries<br>--new-countries<br>--rng-countries | Amount of random new countries to generate | Optional  | 500    |
+## 🚀 Usage
 
-**Note**: I would advice against generating too many new countries. The game may (or may not) load fine, but it could crash at any point after the game has started (even many hours later).
-**Note**: I was not able to generate more than 1,900 countries without the game crashing at startup
+Generate a mod by supplying the Imperator: Rome installation directory and the desired mod name:
 
-# How it works
+```bash
+dotnet run --project ImperatorShatteredWorldGenerator/ImperatorShatteredWorldGenerator.csproj -- --dir "$HOME/.local/share/Steam/steamapps/common/ImperatorRome" --name "Shattered World"
+```
 
-The generator will load and randomise the pops, culture and religion of all the habitable cities defined in the vanilla game.
-It will then proceed to load the vanilla countries and remove all their regions except their capital. The religion and culture of the capital will be set to the country's culture and religion (which usually matched the vanilla ones for that city)
-New countries will be generated randomly, based on randomly chosen vacant cities.
+The generator loads the vanilla game files, applies the randomisation, and writes the result to `out/<mod-identifier>/` together with the `<mod-identifier>.mod` descriptor in the working directory, where `<mod-identifier>` is the mod name converted to a lower-case hyphenated identifier.
 
-**Note**: The game will throw a lot of event errors if some of the vanilla countries are missing. To be on the safe side, all of the vanilla countries will be kept regardless of generator settings. Fixing this would require rewriting many events, and a lot of debugging effort.
+## ⚠️ Known Limitations
 
-# Plans / Goals / Roadmap
+- All vanilla countries are preserved regardless of settings, because removing them causes the vanilla events to fail. This cannot be altered through configuration.
+- Generating very many countries can produce a mod that Imperator: Rome fails to load or that crashes during play, and more than approximately 1,900 countries could not be generated without the game crashing at startup.
+- The output mod directory and mod descriptor files are deleted and regenerated on every run, so previous output for the same mod is overwritten.
 
- - Random trade goods
- - Random country names (based on culture. probably based on Markov chains)
- - Option to remove vanilla countries
+## 🖥️ System Requirements
+
+| Component | Minimum | Recommended |
+|-----------|---------|-------------|
+| Imperator: Rome | A vanilla installation to read the source game files from | N/A |
+| Operating system | 64-bit Linux, macOS, or Windows | N/A |
+
+## 📦 Installation
+
+[![Obtain it from GitHub](https://raw.githubusercontent.com/hmlendea/readme-assets/master/badges/stores/github.png)](https://github.com/hmlendea/imperator-shattered-world-generator/releases)
+
+### Manual Installation
+
+1. Download the archive for your operating system and processor architecture from the [latest release](https://github.com/hmlendea/imperator-shattered-world-generator/releases/latest). The published release provides `linux-x64`, `osx-x64`, and `win-x64` archives.
+2. Extract the archive to a local directory.
+3. Execute the generator from the extraction directory so that the generated `out/` directory is created where you expect it.
+
+## ⚙️ Configuration
+
+The generator is configured entirely through command-line arguments. The game directory and the mod name are mandatory, while every remaining argument falls back to a default value.
+
+### Command-Line Options
+
+| Option | Value | Default | Description |
+|--------|-------|---------|-------------|
+| `-d`, `--dir`, `--game`, `--imperator` | Path to the Imperator: Rome installation | — | Required. For example `~/.local/share/Steam/steamapps/common/ImperatorRome`. |
+| `-n`, `--name` | Mod name | — | Required. The output directory name is derived from it. |
+| `-s`, `--seed` | Integer seed | Random | Seed used by the random number generator. |
+| `--capital-population`, `--capital-pops` | Integer | `10` | Population of capital cities. |
+| `--city-population-min`, `--city-pops-min` | Integer | `4` | Minimum population of regular cities. |
+| `--city-population-max`, `--city-pops-max` | Integer | `12` | Maximum population of regular cities. |
+| `--city-civilisation-min`, `--city-civ-min` | Integer | `0` | Minimum civilisation level of cities. |
+| `--city-civilisation-max`, `--city-civ-max` | Integer | `20` | Maximum civilisation level of cities. |
+| `--city-barbarian-min`, `--city-barb-min` | Integer | `0` | Minimum barbarian level of cities. |
+| `--city-barbarian-max`, `--city-barb-max` | Integer | `0` | Maximum barbarian level of cities. |
+| `--country-centralisation-min`, `--country-cent-min` | Integer | `0` | Minimum centralisation level of countries. |
+| `--country-centralisation-max`, `--country-cent-max` | Integer | `100` | Maximum centralisation level of countries. |
+| `--random-countries`, `--new-countries`, `--rng-countries` | Integer | `500` | Number of new countries to generate. A value of `0` keeps only the vanilla countries. |
+
+## 🛠️ Development
+
+### Requirements
+
+- [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+- An Imperator: Rome installation, to read the vanilla game files from
+
+### Setup
+
+Clone the repository and restore its dependencies:
+
+```bash
+git clone https://github.com/hmlendea/imperator-shattered-world-generator.git
+cd imperator-shattered-world-generator
+dotnet restore
+```
+
+### Build
+
+```bash
+dotnet build --no-restore
+```
+
+### Run
+
+```bash
+dotnet run --project ImperatorShatteredWorldGenerator/ImperatorShatteredWorldGenerator.csproj -- --dir "$HOME/.local/share/Steam/steamapps/common/ImperatorRome" --name "Shattered World"
+```
+
+### Release
+
+Publish self-contained builds for each supported platform and package them into release archives:
+
+```bash
+dotnet publish -c Release -r linux-x64 -o out-linux-x64 --self-contained=true
+dotnet publish -c Release -r osx-x64 -o out-osx-x64 --self-contained=true
+dotnet publish -c Release -r win-x64 -o out-win-x64 --self-contained=true
+```
+
+The repository also contains `package.sh`, which performs the same publication for `win-x64`, `linux-x64`, and `osx-x64`, packages each output directory into a ZIP archive under `bin/Release`, and cleans up afterwards:
+
+```bash
+bash ./package.sh <version>
+```
+
+**Note:** `package.sh` temporarily adds the preview `Microsoft.Packaging.Tools.Trimming` package before publishing. Review the script before running it in your environment.
+
+### Dependencies
+
+| Package | Version | Scope | Purpose |
+|---------|---------|-------|---------|
+| `Microsoft.Extensions.DependencyInjection` | `2.2.0` | Runtime | Constructs and resolves the application services. |
+| `NuciCLI` | `1.3.0.1` | Runtime | Reads the command-line arguments. |
+| `NuciDAL` | `1.1.0.3` | Runtime | Provides the file-based data access and repository abstractions. |
+| `NuciExtensions` | `1.3.2` | Runtime | Provides string and collection extension methods. |
+
+## ⚙️ GitHub Actions
+
+| Workflow | Purpose | What it does |
+|----------|---------|--------------|
+| [ .NET ](https://github.com/hmlendea/imperator-shattered-world-generator/blob/master/.github/workflows/dotnet.yml) | Continuous integration | Determines the .NET version from the production project, sets up the corresponding SDK, restores dependencies, builds the solution, and runs the test step on pushes and pull requests to `master`. |
+
+## 🗂️ Project Structure
+
+The solution contains a single console project, whose namespaces are organised into configuration, data access, and service folders.
+
+### Directories
+
+| Directory | Purpose |
+|-----------|---------|
+| `ImperatorShatteredWorldGenerator/Configuration` | Generator settings and their defaults. |
+| `ImperatorShatteredWorldGenerator/DataAccess/DataObjects` | Entities loaded from the game files. |
+| `ImperatorShatteredWorldGenerator/Service` | Generation, entity management, and mod writing services. |
+| `ImperatorShatteredWorldGenerator/Service/Mapping` | Mappings between entities and domain models. |
+| `ImperatorShatteredWorldGenerator/Service/Models` | City and country domain models. |
+| `.github/workflows` | GitHub Actions workflow definitions. |
+
+## 🤝 Contributing
+
+You are welcome to submit any suggestion, feedback, or modification to this project.
+
+When doing so, please:
+- Maintain cross-platform compatibility
+- Preserve the existing public contract unless a breaking change is intentional
+- Submit focused pull requests that conform to the existing code style
+- Maintain your branch synchronised with `master`
+- Revise the documentation when functionality changes
+- Properly test all modifications, including edge cases and error conditions
+- Include tests for additional or modified functionality
+- Raise a new [issue](https://github.com/hmlendea/imperator-shattered-world-generator/issues) for problems or suggestions
+
+## 💬 Support
+
+For support, please [open an issue](https://github.com/hmlendea/imperator-shattered-world-generator/issues).
+
+## 💝 Project Engagement
+
+Discovered a problem with Imperator Shattered World Generator or have a suggestion for it? [Open an issue](https://github.com/hmlendea/imperator-shattered-world-generator/issues)!
+
+If you find this project useful, consider starring ⭐️ it on GitHub!
+
+## 📄 License
+
+This project is being distributed under the `GNU General Public License v3.0`.
+See [LICENSE](./LICENSE) for additional information.
