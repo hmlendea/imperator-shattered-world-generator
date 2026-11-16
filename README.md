@@ -32,6 +32,7 @@ Every habitable city receives a randomised population, culture, religion, civili
   - [Directories](#directories)
 - [Architecture](#architecture)
 - [Contributing](#contributing)
+- [Security](#security)
 - [Support](#support)
 - [Project Engagement](#project-engagement)
 - [License](#license)
@@ -219,6 +220,12 @@ When doing so, please:
 - Properly test all modifications, including edge cases and error conditions
 - Include tests for additional or modified functionality
 - Raise a new [issue](https://github.com/hmlendea/imperator-shattered-world-generator/issues) for problems or suggestions
+
+## 🔒 Security
+
+Imperator Shattered World Generator runs entirely on your own machine, performs no network communication, and collects no personal data, so its security surface is limited to parsing the vanilla game files and writing the generated mod.
+
+For information on reporting security vulnerabilities, see the [Security Policy](./SECURITY.md).
 
 ## 💬 Support
 
