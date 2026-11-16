@@ -1,0 +1,42 @@
+name: .NET
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Determine the .NET version
+      id: dotnet
+      run: |
+        TARGET_FRAMEWORK="$(sed -n 's|.*<TargetFramework>\(.*\)</TargetFramework>.*|\1|p' ImperatorShatteredWorldGenerator/ImperatorShatteredWorldGenerator.csproj | head -n 1)"
+
+        if [[ -z "${TARGET_FRAMEWORK}" ]]; then
+          echo 'ERROR: Could not determine the target framework from ImperatorShatteredWorldGenerator/ImperatorShatteredWorldGenerator.csproj.' >&2
+          exit 1
+        fi
+
+        DOTNET_VERSION="${TARGET_FRAMEWORK#net}"
+        echo "version=${DOTNET_VERSION}" >> "$GITHUB_OUTPUT"
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: ${{ steps.dotnet.outputs.version }}.x
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --no-restore
+
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
