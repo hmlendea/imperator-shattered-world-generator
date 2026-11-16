@@ -1,3 +1,5 @@
 <Solution>
   <Project Path="ImperatorShatteredWorldGenerator/ImperatorShatteredWorldGenerator.csproj" />
+  <Project Path="ImperatorShatteredWorldGenerator.IntegrationTests/ImperatorShatteredWorldGenerator.IntegrationTests.csproj" />
+  <Project Path="ImperatorShatteredWorldGenerator.UnitTests/ImperatorShatteredWorldGenerator.UnitTests.csproj" />
 </Solution>
