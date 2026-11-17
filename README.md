@@ -32,6 +32,7 @@ Every habitable city receives a randomised population, culture, religion, civili
 - [Project Structure](#project-structure)
   - [Directories](#directories)
 - [Architecture](#architecture)
+- [Documentation](#documentation)
 - [Contributing](#contributing)
 - [Code of Conduct](#code-of-conduct)
 - [Security](#security)
@@ -208,6 +209,28 @@ The solution contains a single console project, whose namespaces are organised i
 Imperator Shattered World Generator is a single-process console pipeline in which a dependency-injected composition root loads the vanilla game data, randomises it through dedicated city and country generators, and writes the result as a self-contained mod.
 
 See the [Architecture Documentation](./ARCHITECTURE.md) for the system context, principal components, runtime flows, ownership boundaries, dependencies, constraints, and extension points.
+
+## 📚 Documentation
+
+Detailed documentation for the generator is maintained in the [`docs/`](./docs/) directory. It covers the repository layout, architecture, command-line configuration, generation behaviour, execution flows, data model, testing, and operations, and it is intended for both contributors and future maintainers.
+
+| Resource | Description |
+|----------|-------------|
+| [docs/INDEX.md](./docs/INDEX.md) | Master index and navigation for the whole documentation tree. |
+| [docs/quick-start.md](./docs/quick-start.md) | Getting started guide for newcomers, including first-run verification. |
+| [docs/architecture.md](./docs/architecture.md) | Architectural deep dive that complements the root architecture document. |
+| [docs/repository-structure.md](./docs/repository-structure.md) | Source tree layout, project organisation, and naming conventions. |
+| [docs/configuration.md](./docs/configuration.md) | Every command-line option, alias, default, and validation rule. |
+| [docs/behaviour/README.md](./docs/behaviour/README.md) | User-facing behaviours: world randomisation, country creation, and reproducibility. |
+| [docs/flows/README.md](./docs/flows/README.md) | End-to-end execution flows from startup to mod emission. |
+| [docs/components/README.md](./docs/components/README.md) | Per-component deep dives covering purpose, execution, state, and failures. |
+| [docs/data-model.md](./docs/data-model.md) | Domain models, the city data object, and the vanilla-to-mod field mapping. |
+| [docs/invariants.md](./docs/invariants.md) | System-wide invariants that must remain true for the mod to load. |
+| [docs/change-guide.md](./docs/change-guide.md) | Recipes for modifying common areas safely. |
+| [docs/testing.md](./docs/testing.md) | Test strategy, fixtures, doubles, covered behaviour, and gaps. |
+| [docs/build-and-deployment.md](./docs/build-and-deployment.md) | Build, publish, packaging, and continuous integration. |
+| [docs/troubleshooting.md](./docs/troubleshooting.md) | Symptoms, causes, and remedies for common issues. |
+| [docs/ambiguities-and-open-questions.md](./docs/ambiguities-and-open-questions.md) | Recorded discrepancies and unresolved aspects of the implementation. |
 
 ## 🤝 Contributing
 
