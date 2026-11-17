@@ -56,7 +56,7 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
         public void GivenAMod_WhenCreatingTheMod_ThenTheDescriptorAndModFilesAreWritten()
         {
             SetupEmptyWorld();
-            string expectedContent = $"{Environment.NewLine}name = \"Shattered World\"{Environment.NewLine}path = \"mod/shattered-world\"{Environment.NewLine}";
+            string expectedContent = $"{Environment.NewLine}name = \"Shattered World\"{Environment.NewLine}path = \"mod/shattered-world\"{Environment.NewLine}supported_version = \"2.0.*\"{Environment.NewLine}";
 
             modWriter.CreateMod();
 

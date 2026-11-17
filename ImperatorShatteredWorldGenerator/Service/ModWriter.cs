@@ -12,6 +12,8 @@ namespace ImperatorShatteredWorldGenerator.Service
 {
     public sealed class ModWriter : IModWriter
     {
+        const string SupportedGameVersion = "2.0.*";
+
         const string VanillaCompatibilityComment =
             "\t\t\t# VANILLA COUNTRY - REQUIRED FOR COMPATIBILITY";
 
@@ -78,7 +80,8 @@ namespace ImperatorShatteredWorldGenerator.Service
 
             string fileContent =
                 $"name = \"{settings.ModName}\"" + Environment.NewLine +
-                $"path = \"mod/{settings.ModId}\"";
+                $"path = \"mod/{settings.ModId}\"" + Environment.NewLine +
+                $"supported_version = \"{SupportedGameVersion}\"";
 
             WriteFile(settings.ModFilePath, fileContent);
             WriteFile(descriptorFilePath, fileContent);
