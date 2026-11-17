@@ -221,6 +221,8 @@ When doing so, please:
 - Include tests for additional or modified functionality
 - Raise a new [issue](https://github.com/hmlendea/imperator-shattered-world-generator/issues) for problems or suggestions
 
+See the [Contributing Guidelines](./CONTRIBUTING.md) for details on how to report issues, suggest enhancements, and submit changes.
+
 ## 🔒 Security
 
 Imperator Shattered World Generator runs entirely on your own machine, performs no network communication, and collects no personal data, so its security surface is limited to parsing the vanilla game files and writing the generated mod.
