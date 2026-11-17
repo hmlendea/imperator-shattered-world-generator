@@ -1,3 +1,4 @@
+[![Donate](https://img.shields.io/badge/-%E2%99%A5%20Donate-%23ff69b4)](https://hmlendea.go.ro/funding)
 [![Latest Release](https://img.shields.io/github/v/release/hmlendea/imperator-shattered-world-generator)](https://github.com/hmlendea/imperator-shattered-world-generator/releases/latest)
 [![Build Status](https://github.com/hmlendea/imperator-shattered-world-generator/actions/workflows/dotnet.yml/badge.svg)](https://github.com/hmlendea/imperator-shattered-world-generator/actions/workflows/dotnet.yml)
 [![License](https://img.shields.io/github/license/hmlendea/imperator-shattered-world-generator)](https://github.com/hmlendea/imperator-shattered-world-generator/blob/master/LICENSE)
@@ -242,7 +243,9 @@ For support, please [open an issue](https://github.com/hmlendea/imperator-shatte
 
 Discovered a problem with Imperator Shattered World Generator or have a suggestion for it? [Open an issue](https://github.com/hmlendea/imperator-shattered-world-generator/issues)!
 
-If you find this project useful, consider starring ⭐️ it on GitHub!
+If you find this project useful, consider [funding it](https://hmlendea.go.ro/funding) or starring ⭐️ it on GitHub!
+
+[![Donate](https://raw.githubusercontent.com/hmlendea/readme-assets/master/donate_generic.png)](https://hmlendea.go.ro/funding)
 
 ## 📄 License
 
