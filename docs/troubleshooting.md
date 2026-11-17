@@ -14,12 +14,12 @@
 
 | Symptom | Cause | Remedy |
 |---------|-------|--------|
-| `DirectoryNotFoundException` mentioning `game/common` | `--dir` points at the wrong level | Point at the directory that directly contains `game/` |
+| `DirectoryNotFoundException` mentioning `game/setup` or `game/common` | `--dir` points at the wrong level | Point at the directory that directly contains `game/` |
 | `FileNotFoundException` for `religions/00_default.txt` | Non-vanilla or heavily modded installation, or an unexpected game version | Verify the file exists |
-| `FileNotFoundException` for a country file | `countries.txt` references a path that does not exist | Verify the installation integrity |
-| `SerializationException` while loading cities | `province_setup.csv` rows do not match the expected column count | Verify the installation; the file may have been edited |
+| `FileNotFoundException` for `setup/main/00_default.txt` or `setup/countries/countries.txt` | Unexpected game version or incomplete installation | Verify the files exist |
+| Empty world (no cities) | `map_data/definition.csv` absent, or `setup/provinces` absent | Verify the installation |
 | `InvalidOperationException` about an empty sequence | No cultures or religions were loaded | Verify `game/common/cultures/**` and `religions/00_default.txt` |
-| Reload after a game patch produces odd values | Parsing is regex-based and indentation-sensitive | Inspect the loader patterns against the new file layout |
+| Reload after a game patch produces odd values | Parsing is format-based | Inspect the loader logic against the new file layout |
 
 ## Generation problems
 
@@ -39,14 +39,14 @@
 | Previous output missing | `ModWriter` deletes and recreates on every run | Copy `out/<mod-id>/` before re-running |
 | `UnauthorizedAccessException` | Output directory not writable | Run from a writable directory |
 | Partial mod present | The writer failed mid-way | Delete `out/<mod-id>` and `out/<mod-id>.mod`, then re-run |
-| No BOM on some files | Only `WriteUnicodeFile` emits a BOM; `setup.txt` and the descriptors do not | Expected behaviour |
+| No BOM on descriptor files | Only `WriteUnicodeFile` emits a BOM; the descriptors do not | Expected behaviour |
 
 ## In-game problems
 
 | Symptom | Cause | Remedy |
 |---------|-------|--------|
 | Mod not listed | The descriptor is not in the game's mod directory, or `path` does not match the folder | Place `out/<mod-id>.mod` and `out/<mod-id>/` per the game's mod layout |
-| Game crashes at startup | Too many countries, or a malformed generated file | Reduce `--random-countries`; inspect `setup.txt` and `countries.txt` |
+| Game crashes at startup | Too many countries, or a malformed generated file | Reduce `--random-countries`; inspect `setup/main/02_shattered_world_countries.txt` and `setup/countries/countries.txt` |
 | Missing country names | Localisation only covers generated countries | Expected: vanilla names come from the base game |
 | Duplicate or blank names | A city with a blank `NameId` entered the pool | Should be prevented by `IsHabitable`; report a defect with the seed |
 | Country tags rejected after years | Vanilla countries were removed from a hand-edited setup | Do not remove vanilla countries; the generator never does |
@@ -59,6 +59,6 @@ Always capture the printed seed and the full command line. With both, plus the s
 
 The application emits two lines. To narrow a failure:
 1. Run with `--random-countries 0` to isolate loading and the city stage.
-2. Inspect `out/<mod-id>/common/province_setup.csv` to confirm the city stage produced data.
-3. Inspect `out/<mod-id>/common/setup.txt` to confirm every country is present.
+2. Inspect `out/<mod-id>/setup/provinces/02_shattered_world.txt` to confirm the city stage produced data.
+3. Inspect `out/<mod-id>/setup/main/02_shattered_world_countries.txt` to confirm every country is present.
 4. Set breakpoints using the table in [Startup and Generation](./flows/startup-and-generation.md#where-to-set-breakpoints).

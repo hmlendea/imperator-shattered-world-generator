@@ -57,7 +57,7 @@ namespace ImperatorShatteredWorldGenerator.Service
             {
                 return;
             }
-            
+
             IList<string> validCityIds = entityManager
                 .GetCities()
                 .Where(city =>
@@ -74,16 +74,21 @@ namespace ImperatorShatteredWorldGenerator.Service
             {
                 string cityId = validCityIds.GetRandomElement(rng.Randomiser);
                 Country country = countryGenerator.GenerateCountry(cityId);
-                
+
                 entityManager.AddCountry(country);
                 validCityIds.Remove(cityId);
             }
         }
-        
+
         void GenerateCapitals()
         {
             foreach (Country country in entityManager.GetCountries())
             {
+                if (string.IsNullOrWhiteSpace(country.CapitalId) || entityManager.GetCity(country.CapitalId) is null)
+                {
+                    continue;
+                }
+
                 City capital = cityGenerator.GenerateCapital(country);
                 entityManager.UpdateCity(capital);
             }

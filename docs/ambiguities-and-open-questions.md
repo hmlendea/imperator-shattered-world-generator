@@ -20,31 +20,21 @@ The root `ARCHITECTURE.md` states that "a single seeded `System.Random` instance
 
 Consequences are benign (determinism holds, stages are isolated) but the documented mental model is wrong, and reasoning about "the next draw" across components will mislead. Either the documentation or the registration should change; changing the registration alters every generated world.
 
-## `centralization` is never loaded from vanilla files
+## `centralization` parsing tolerates both value forms
 
-`EntitiesLoader.LoadCountries` walks *backwards* from the `capital` line and stops at the first match of each pattern. The centralisation guard is `country.CentralisationLevel == 0` with an additional non-blank check, and the integration test asserts that a `centralization = 42` line yields a model value of `-1`. In other words, vanilla centralisation is discarded and the writer consequently omits the `centralization` line for vanilla countries.
+`EntitiesLoader.LoadCountries` reads the `centralization` attribute from the country block and applies it when it parses as an integer. Vanilla centralisation is therefore loaded and re-emitted, rather than discarded. The `Country` default of `-1` still marks an unset value, so a country whose block omits the attribute keeps the sentinel and the writer omits the line.
 
-The test name (`…ThenTheCentralisationLevelIsLeftUnset`) documents the behaviour as intended, but the loader contains the code to read the value, so the intent is ambiguous. Options: parse it correctly (changes output), or remove the dead parsing (clarifies intent).
+## Province definition CSV has ragged field counts
 
-## CSV header order disagrees with row order
+`LoadProvinceNames` reads `game/map_data/definition.csv` through `NuciDAL.IO.CsvFile<T>`, which requires every row to have exactly as many fields as the entity declares. The vanilla file has 23, 24, or 25 fields depending on the row, so the loader first writes a temporary normalised copy with the leading `id;r;g;b;name` columns of each non-comment row, reads that, and deletes it. This is correct but allocates a temporary file per run; a streaming row reader would avoid it.
 
-`WriteProvincesSetup` writes the header `…;Citizens;Freedmen;Slaves;Tribesmen;…` and each row as `Citizens, Freemen, Tribesmen, Slaves`. The row order matches `CityEntity` and therefore the repository, so the file is self-consistent for a positional reader but contradicts its own header. Either the header or the row order should change; the row order is what the loader expects back.
-
-## `ToServiceModel` and `ToDataObject` assign `TribesmenCount` twice
-
-Both mapping methods set `TribesmenCount` twice in a row. The second assignment is redundant but harmless because the value is identical. It is a candidate for a small cleanup with no behavioural impact.
-
-## UTF-8 normalisation is discarded
-
-`WriteUnicodeFile` computes `NormaliseFileContent(content)` but writes the original `content`. The resulting files therefore depend on each writer producing its own leading/trailing newline. The tests only assert trailing newlines for the plain-text files, so the discrepancy is not currently caught. Either assign the normalised value or remove the unused local.
+## Culture extraction depends on exact indentation
 
 ## Unused local in `GenerateCountryId`
 
 `GenerateCountryId` computes `normalisedCapitalName` and never uses it; the actual work happens in `GenerateCapitalIdBasedOnName`. Dead code only.
 
-## `CsvRepository.Add` misuse in `ModWriter`
-
-`WriteProvincesSetup` creates a repository over the target file and calls `Add` for each city, then writes the file content manually. The `Add` calls may create or truncate the file before the manual write. On a fresh directory the effect is invisible; on an existing file it interacts with the earlier delete. The repository is effectively redundant and could be removed.
+`LoadCultureIds` locates the top-level `culture = { }` block in each group file and collects its two-tab entries. A vanilla file whose group block is named differently, or that nests the subcultures at a different indentation, would yield no cultures for that file, and the failure is silent until `GetRandomElement` throws on an empty list.
 
 ## Editor tasks point at stale paths
 
@@ -56,11 +46,15 @@ The README states that more than roughly 1,900 countries could not be generated 
 
 ## Government and stance extraction is over-broad
 
-`LoadGovernmentIds`, `LoadDiplomaticStanceIds`, and `LoadReligionIds` accept **any** block header at column zero, including nested blocks whose names begin at that indentation in some vanilla files. The fixtures only exercise top-level blocks. A wrong identifier would surface as an invalid `government =` value in `setup.txt`, which the game may reject without a clear error.
+`LoadGovernmentIds`, `LoadDiplomaticStanceIds`, and `LoadReligionIds` accept **any** block header at column zero, including nested blocks whose names begin at that indentation in some vanilla files. The fixtures only exercise top-level blocks. A wrong identifier would surface as an invalid `government =` value in the setup file, which the game may reject without a clear error.
 
-## Culture extraction depends on exact indentation
+## Province definition CSV has ragged field counts
 
-`LoadCultureIds` requires exactly two tabs and an empty body (`{}`). A vanilla file that uses spaces or a body with a modifier would yield no cultures for that file, and the failure is silent until `GetRandomElement` throws on an empty list.
+`LoadProvinceNames` reads `game/map_data/definition.csv` through `NuciDAL.IO.CsvFile<T>`, which requires every row to have exactly as many fields as the entity declares. The vanilla file has 23, 24, or 25 fields depending on the row, so the loader first writes a temporary normalised copy with the leading `id;r;g;b;name` columns of each non-comment row, reads that, and deletes it. This is correct but allocates a temporary file per run; a streaming row reader would avoid it.
+
+## Non-habitable provinces are left unchanged
+
+Only provinces with a non-blank `province_rank`, `culture`, `religion`, and `trade_goods`, plus a name in the definition CSV, are rewritten. Impassable and unnamed provinces keep their vanilla values because the mod's province file merges with the vanilla files per province id. This relies on the game merging rather than replacing province entries; a game version that replaced them would wipe the untouched provinces.
 
 ## No validation that `min <= max`
 

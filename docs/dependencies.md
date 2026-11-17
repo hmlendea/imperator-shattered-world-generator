@@ -34,7 +34,7 @@ Both test projects share the same package set and `ProjectReference` the product
 
 | Dependency | Consumed by | Nature |
 |------------|-------------|--------|
-| Imperator: Rome installation | `EntitiesLoader` | Read-only input: `game/common/province_setup.csv`, `game/common/setup.txt`, `game/common/countries.txt`, `game/common/countries/**`, `game/common/cultures/**`, `game/common/governments/**`, `game/common/diplomatic_stances/**`, `game/common/religions/00_default.txt`, `game/localization/english/countries_l_english.yml` |
+| Imperator: Rome installation | `EntitiesLoader` | Read-only input: `game/setup/provinces/**`, `game/setup/main/**`, `game/setup/countries/**`, `game/map_data/definition.csv`, `game/common/cultures/**`, `game/common/governments/**`, `game/common/diplomatic_stances/**`, `game/common/religions/00_default.txt`, `game/localization/english/countries_l_english.yml` |
 | File system (working directory) | `GeneratorSettings`, `ModWriter` | Output: `out/<mod-id>/`, `out/<mod-id>.mod` |
 | `zip` utility | `package.sh` | Release packaging |
 | .NET SDK 10 | `package.sh`, CI | Build and self-contained publish |

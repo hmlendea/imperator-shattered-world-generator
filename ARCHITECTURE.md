@@ -55,7 +55,7 @@ flowchart LR
     output["Local working directory (out/mod-id and mod descriptor)"]
 
     operator -- "game path, mod name, generation settings" --> generator
-    generator -- "reads province_setup.csv, setup.txt, countries.txt, cultures, religions, governments, diplomatic stances" --> game
+    generator -- "reads setup/provinces, setup/main, setup/countries, map_data/definition.csv, cultures, religions, governments, diplomatic stances" --> game
     generator -- "writes mod files and descriptor" --> output
 ```
 
@@ -164,9 +164,11 @@ Boundary rules:
 
 Paths:
 - `ImperatorShatteredWorldGenerator/DataAccess/DataObjects`
+- `ImperatorShatteredWorldGenerator/DataAccess/Parsing`
 
 Responsibilities:
-- Define the CSV-backed data objects used to read and write game entities.
+- Define the CSV-backed data objects used to read game entities.
+- Provide the shared Clausewitz text parsing helpers.
 
 Boundary rules:
 - Must not depend on the service namespaces.
@@ -208,15 +210,16 @@ The system owns no persistent database. It reads vanilla entities into memory, t
 
 ```mermaid
 flowchart LR
-    provinces["province_setup.csv (CityEntity)"]
-    setup["setup.txt (countries, regex)"]
-    countriesTxt["countries.txt and country files (regex)"]
+    provinces["setup/provinces/*.txt (Clausewitz text)"]
+    definitions["map_data/definition.csv (province names, NuciDAL CSV)"]
+    setup["setup/main/00_default.txt (countries, Clausewitz text)"]
+    countriesTxt["setup/countries/countries.txt and country files (regex)"]
     loc["countries_l_english.yml (names)"]
     dirs["cultures, religions, governments, diplomatic_stances (regex)"]
     entityManager["EntityManager (City and Country dictionaries, id lists)"]
     generators["CityGenerator and CountryGenerator"]
     writer["ModWriter"]
-    modFiles["out/mod-id: province_setup.csv, countries/, countries.txt, localisation, setup.txt, events, defines, descriptor"]
+    modFiles["out/mod-id: setup/provinces, setup/countries, setup/main, localisation, events, defines, descriptor"]
 
     provinces --> entityManager
     setup --> entityManager
@@ -231,7 +234,7 @@ flowchart LR
 
 | Data or Store | Owner | Representation and Storage | Lifecycle or Consistency |
 |---------------|-------|----------------------------|--------------------------|
-| `City` / `CityEntity` | `EntityManager` | Domain model in memory, CSV data object on disk | Loaded lazily on first access; mutated by `CityGenerator`; serialised by `ModWriter` |
+| `City` / `CityEntity` | `EntityManager` | Domain model in memory, Clausewitz text on disk, province names from `map_data/definition.csv` | Loaded lazily on first access; mutated by `CityGenerator`; serialised by `ModWriter` |
 | `Country` | `EntityManager` | Domain model in memory | Loaded from vanilla files, new entries added by `CountryGenerator`, all serialised by `ModWriter` |
 | Identifier sets (culture, religion, government, diplomatic stance) | `EntityManager` | In-memory `IEnumerable<string>` lists | Loaded lazily once and cached for the process lifetime |
 | `GeneratorSettings` | `Program` | In-memory settings object | Created once at startup; immutable during a run |
@@ -263,7 +266,7 @@ sequenceDiagram
 
     Orchestrator->>Manager: GetCityIds()
     Manager->>Loader: LoadCities() (first access)
-    Loader-->>Manager: CityEntity list mapped to City
+    Loader-->>Manager: City list parsed from setup/provinces, named via map_data/definition.csv
     loop each city id
         Orchestrator->>CityGen: GenerateCity(id)
         CityGen->>Manager: GetCity(id)
@@ -309,9 +312,9 @@ sequenceDiagram
     Orchestrator->>Writer: CreateMod()
     Writer->>Disk: delete and recreate out/mod-id and descriptor
     Writer->>Manager: GetCities()
-    Writer->>Disk: write province_setup.csv
+    Writer->>Disk: write setup/provinces
     Writer->>Manager: GetCountries()
-    Writer->>Disk: write country files, countries.txt, localisation, setup.txt
+    Writer->>Disk: write setup/countries files and index, localisation, setup/main
     Writer->>Disk: write events and defines files
 ```
 
@@ -382,7 +385,7 @@ The principal dependency rules are:
 |------------|----------------|----------------------|---------------------------|
 | `Microsoft.Extensions.DependencyInjection` | Constructs and resolves services | `Program` composition root | Registrations are centralised in `Program`; adding a service means editing the composition root |
 | `NuciCLI.Arguments` | Parses command-line arguments | `Program` argument loading | Option names and aliases are declared in `Program` |
-| `NuciDAL` | Provides CSV repository and data object abstractions | `EntitiesLoader`, `ModWriter`, `CityEntity` | City persistence is expressed as a CSV repository over `CityEntity` |
+| `NuciDAL` | Provides CSV file and repository abstractions | `EntitiesLoader` | Province names are read from the game's semicolon-separated `map_data/definition.csv` via `CsvFile<ProvinceDefinitionEntity>` |
 | `NuciExtensions` | Provides string and collection extensions | Services and mapping | Random element selection, punctuation and diacritic removal, and repetition are reused across services |
 
 ## 🚀 Deployment and Operations
@@ -404,7 +407,7 @@ The system ships as a self-contained console application published per platform 
 | Mod directory and descriptor naming | `GeneratorSettings` | `ModId` is the lower-case, punctuation-free, diacritic-free, hyphenated mod name; the directory is `out/<ModId>` and the descriptor is `<ModId>.mod` | `GeneratorSettingsTests` | Changing the derivation breaks output placement and must be treated as breaking |
 | Vanilla country preservation | `ShatteredWorldGenerator` and `ModWriter` | All vanilla countries remain in the generated setup with their capitals | `ShatteredWorldGeneratorTests` and `ModWriterTests` | Removal is prohibited because vanilla events depend on the countries |
 | Reserved country identifiers | `CountryGenerator` | `REB`, `PIR`, `BAR`, and `MER` are never generated | `CountryGeneratorTests` | Adding reserved identifiers requires a matching writer change |
-| CSV column order | `ModWriter` | `province_setup.csv` uses the documented column order | `ModWriterTests` | The game expects this order; changes must match the game format |
+| Mod output layout | `ModWriter` | The mod writes `setup/provinces`, `setup/countries`, `setup/main`, and `map_data`-compatible files under the paths the game loader expects | `ModWriterTests` | The file paths and Clausewitz block shapes must match the current game format |
 | Seeded determinism | `RandomNumberGenerator` | A fixed seed reproduces a run exactly | `RandomNumberGeneratorTests` | Any new random source must draw from the shared randomiser to preserve determinism |
 
 ## ✅ Testing and Verification

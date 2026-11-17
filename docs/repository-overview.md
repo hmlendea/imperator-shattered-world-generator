@@ -7,11 +7,11 @@ The repository contains **Imperator Shattered World Generator**, a .NET 10 conso
 ## Scope
 
 In scope:
-- Reading a user-supplied Imperator: Rome installation (`game/common`, `game/localization`) and parsing the vanilla files that describe provinces, countries, cultures, religions, governments, and diplomatic stances.
+- Reading a user-supplied Imperator: Rome installation (`game/setup`, `game/map_data`, `game/localization`, `game/common`) and parsing the vanilla files that describe provinces, countries, cultures, religions, governments, and diplomatic stances.
 - Randomising city population, culture, religion, civilisation level, and barbarian level.
 - Restricting every vanilla country to its capital city.
 - Generating additional countries, each with an identifier, name, culture, religion, government, diplomatic stance, centralisation level, capital, colour, and ship names.
-- Writing the mod descriptor, `province_setup.csv`, country files, `countries.txt`, localisation, `setup.txt`, an event file, and a defines file.
+- Writing the mod descriptor, the `setup/provinces`, `setup/countries`, and `setup/main` files, localisation, an event file, and a defines file.
 
 Out of scope:
 - Launching the game or installing the mod into the game directory.
@@ -53,6 +53,6 @@ There are no hosted services, no background workers, no persistence beyond the g
 - Vanilla countries are always retained; removing them breaks vanilla events.
 - The output directory and descriptor are deleted and recreated on every run.
 - Paths are derived from the process working directory, so the working directory determines where output lands.
-- The vanilla file formats are parsed by regular expressions and a CSV repository without schema validation.
+- The vanilla file formats are parsed by regular expressions, a Clausewitz text scanner, and a semicolon CSV reader without schema validation.
 
 See [Invariants](./invariants.md) for the complete list and [Ambiguities and open questions](./ambiguities-and-open-questions.md) for unresolved aspects.

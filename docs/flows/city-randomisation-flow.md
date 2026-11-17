@@ -16,7 +16,7 @@ sequenceDiagram
 
     S->>M: GetCityIds()
     M->>L: LoadCities() (first access only)
-    L-->>M: City list from province_setup.csv
+    L-->>M: City list from setup/provinces
     loop each id
         S->>C: GenerateCity(id)
         C->>M: GetCity(id)

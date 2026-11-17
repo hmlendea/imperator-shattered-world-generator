@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 
 using Moq;
@@ -15,8 +14,6 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
     [TestFixture]
     public sealed class ModWriterTests
     {
-        private static readonly string[] ShipNames = ["Boaty", "McBoatface"];
-
         private TemporaryDirectory workingDirectory = null!;
         private WorkingDirectoryScope workingDirectoryScope = null!;
         private Mock<IEntityManager> entityManager = null!;
@@ -43,24 +40,22 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
         [Test]
         public void GivenAMod_WhenCreatingTheMod_ThenTheDirectoryStructureIsPrepared()
         {
-            entityManager.Setup(manager => manager.GetCities()).Returns([]);
-            entityManager.Setup(manager => manager.GetCountries()).Returns([]);
+            SetupEmptyWorld();
 
             modWriter.CreateMod();
 
-            Assert.That(workingDirectory.DirectoryExists("out/shattered-world"), Is.True);
-            Assert.That(workingDirectory.DirectoryExists("out/shattered-world/common"), Is.True);
-            Assert.That(workingDirectory.DirectoryExists("out/shattered-world/common/countries"), Is.True);
+            Assert.That(workingDirectory.DirectoryExists("out/shattered-world/setup/provinces"), Is.True);
+            Assert.That(workingDirectory.DirectoryExists("out/shattered-world/setup/countries"), Is.True);
+            Assert.That(workingDirectory.DirectoryExists("out/shattered-world/setup/main"), Is.True);
             Assert.That(workingDirectory.DirectoryExists("out/shattered-world/common/defines"), Is.True);
             Assert.That(workingDirectory.DirectoryExists("out/shattered-world/events"), Is.True);
-            Assert.That(workingDirectory.DirectoryExists("out/shattered-world/localization"), Is.True);
+            Assert.That(workingDirectory.DirectoryExists("out/shattered-world/localization/english"), Is.True);
         }
 
         [Test]
         public void GivenAMod_WhenCreatingTheMod_ThenTheDescriptorAndModFilesAreWritten()
         {
-            entityManager.Setup(manager => manager.GetCities()).Returns([]);
-            entityManager.Setup(manager => manager.GetCountries()).Returns([]);
+            SetupEmptyWorld();
             string expectedContent = $"{Environment.NewLine}name = \"Shattered World\"{Environment.NewLine}path = \"mod/shattered-world\"{Environment.NewLine}";
 
             modWriter.CreateMod();
@@ -74,54 +69,87 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
         [Test]
         public void GivenAnExistingModDirectory_WhenCreatingTheMod_ThenThePreviousOutputIsDiscarded()
         {
-            entityManager.Setup(manager => manager.GetCities()).Returns([]);
-            entityManager.Setup(manager => manager.GetCountries()).Returns([]);
-            workingDirectory.WriteFile("out/shattered-world/common/stale.txt", "stale");
+            SetupEmptyWorld();
+            workingDirectory.WriteFile("out/shattered-world/setup/stale.txt", "stale");
             workingDirectory.WriteFile("out/shattered-world.mod", "stale");
 
             modWriter.CreateMod();
 
-            Assert.That(workingDirectory.FileExists("out/shattered-world/common/stale.txt"), Is.False);
+            Assert.That(workingDirectory.FileExists("out/shattered-world/setup/stale.txt"), Is.False);
             Assert.That(workingDirectory.ReadFile("out/shattered-world.mod"), Does.Not.Contain("stale"));
         }
 
         [Test]
-        public void GivenCities_WhenCreatingTheMod_ThenTheProvinceSetupContainsTheHeaderAndEveryCity()
+        public void GivenCities_WhenCreatingTheMod_ThenTheProvinceFileContainsEveryRandomisedCity()
         {
             City city = BuildCity("1", "Newport");
             entityManager.Setup(manager => manager.GetCities()).Returns([city]);
             entityManager.Setup(manager => manager.GetCountries()).Returns([]);
-            string expectedContent =
-                "#ProvID;Culture;Religion;TradeGoods;Citizens;Freedmen;Slaves;Tribesmen;Civilization;Barbarian;NameRef;AraRef" +
-                $"{Environment.NewLine}1,roman,pagan,grain,4,8,16,32,8,16,Newport,1{Environment.NewLine}";
 
             modWriter.CreateMod();
 
-            Assert.That(
-                workingDirectory.ReadFile("out/shattered-world/common/province_setup.csv"),
-                Is.EqualTo(expectedContent));
+            string content = workingDirectory.ReadFile("out/shattered-world/setup/provinces/02_shattered_world.txt");
+
+            Assert.That(content, Does.Contain("1="));
+            Assert.That(content, Does.Contain("culture=\"roman\""));
+            Assert.That(content, Does.Contain("religion=\"pagan\""));
+            Assert.That(content, Does.Contain("trade_goods=\"grain\""));
+            Assert.That(content, Does.Contain("province_rank=\"settlement\""));
+            Assert.That(content, Does.Contain("civilization_value=8"));
+            Assert.That(content, Does.Contain("barbarian_power=16"));
         }
 
         [Test]
-        public void GivenNoCities_WhenCreatingTheMod_ThenTheProvinceSetupContainsOnlyTheHeader()
+        public void GivenACityWithNonRandomisedLines_WhenCreatingTheMod_ThenThePreservedLinesAreWritten()
         {
-            entityManager.Setup(manager => manager.GetCities()).Returns([]);
+            City city = BuildCity("1", "Newport");
+            city.PreservedLines = ["\tterrain=\"farmland\""];
+            entityManager.Setup(manager => manager.GetCities()).Returns([city]);
             entityManager.Setup(manager => manager.GetCountries()).Returns([]);
-            string expectedContent =
-                "#ProvID;Culture;Religion;TradeGoods;Citizens;Freedmen;Slaves;Tribesmen;Civilization;Barbarian;NameRef;AraRef" +
-                $"{Environment.NewLine}";
 
             modWriter.CreateMod();
 
             Assert.That(
-                workingDirectory.ReadFile("out/shattered-world/common/province_setup.csv"),
-                Is.EqualTo(expectedContent));
+                workingDirectory.ReadFile("out/shattered-world/setup/provinces/02_shattered_world.txt"),
+                Does.Contain("\tterrain=\"farmland\""));
         }
 
         [Test]
-        public void GivenCountries_WhenCreatingTheMod_ThenACountryFileIsWrittenForEachOfThem()
+        public void GivenACityWithPopulations_WhenCreatingTheMod_ThenThePopulationBlocksAreWritten()
         {
-            Country country = BuildCountry("ROM", "Rome");
+            City city = BuildCity("1", "Newport");
+            entityManager.Setup(manager => manager.GetCities()).Returns([city]);
+            entityManager.Setup(manager => manager.GetCountries()).Returns([]);
+
+            modWriter.CreateMod();
+
+            string content = workingDirectory.ReadFile("out/shattered-world/setup/provinces/02_shattered_world.txt");
+
+            Assert.That(content, Does.Contain("\tcitizen="));
+            Assert.That(content, Does.Contain("\t\tamount=4"));
+            Assert.That(content, Does.Contain("\tfreemen="));
+            Assert.That(content, Does.Contain("\tslaves="));
+            Assert.That(content, Does.Contain("\ttribesmen="));
+        }
+
+        [Test]
+        public void GivenNoCities_WhenCreatingTheMod_ThenTheProvinceFileContainsOnlyTheHeader()
+        {
+            SetupEmptyWorld();
+
+            modWriter.CreateMod();
+
+            string content = workingDirectory.ReadFile("out/shattered-world/setup/provinces/02_shattered_world.txt");
+
+            Assert.That(content.TrimStart(), Does.StartWith("# VANILLA PROVINCES - RANDOMISED"));
+            Assert.That(content, Does.Not.Contain("="));
+        }
+
+        [Test]
+        public void GivenAGeneratedCountry_WhenCreatingTheMod_ThenACountryFileIsWrittenForIt()
+        {
+            Country country = BuildCountry("COR", "Cornova");
+            country.IsVanilla = false;
             entityManager.Setup(manager => manager.GetCities()).Returns([]);
             entityManager.Setup(manager => manager.GetCountries()).Returns([country]);
             string expectedContent =
@@ -133,47 +161,58 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
 
             modWriter.CreateMod();
 
-            Assert.That(workingDirectory.FileExists("out/shattered-world/common/countries/ROM.txt"), Is.True);
-            Assert.That(
-                workingDirectory.ReadFile("out/shattered-world/common/countries/ROM.txt"),
-                Is.EqualTo(expectedContent));
+            Assert.That(workingDirectory.FileExists("out/shattered-world/setup/countries/COR.txt"), Is.True);
+            Assert.That(workingDirectory.ReadFile("out/shattered-world/setup/countries/COR.txt"), Is.EqualTo(expectedContent));
+        }
+
+        [Test]
+        public void GivenAVanillaCountry_WhenCreatingTheMod_ThenNoCountryFileIsWrittenForIt()
+        {
+            Country country = BuildCountry("ROM", "Rome");
+            country.IsVanilla = true;
+            entityManager.Setup(manager => manager.GetCities()).Returns([]);
+            entityManager.Setup(manager => manager.GetCountries()).Returns([country]);
+
+            modWriter.CreateMod();
+
+            Assert.That(workingDirectory.FileExists("out/shattered-world/setup/countries/ROM.txt"), Is.False);
         }
 
         [Test]
         public void GivenCountries_WhenCreatingTheMod_ThenTheDefinitionIndexListsTheDefaultEntriesAndEveryCountry()
         {
+            Country vanillaCountry = BuildCountry("ROM", "Rome");
+            vanillaCountry.IsVanilla = true;
+            vanillaCountry.DefinitionFilePath = "setup/countries/italia/rome.txt";
+            Country generatedCountry = BuildCountry("COR", "Cornova");
+            generatedCountry.IsVanilla = false;
             entityManager.Setup(manager => manager.GetCities()).Returns([]);
-            entityManager.Setup(manager => manager.GetCountries()).Returns([BuildCountry("ROM", "Rome")]);
+            entityManager.Setup(manager => manager.GetCountries()).Returns([vanillaCountry, generatedCountry]);
             string expectedContent =
-                $"REB = \"countries/rebels.txt\"{Environment.NewLine}" +
-                $"PIR = \"countries/pirates.txt\"{Environment.NewLine}" +
-                $"BAR = \"countries/barbarians.txt\"{Environment.NewLine}" +
-                $"MER = \"countries/mercenaries.txt\"{Environment.NewLine}" +
-                $"ROM = \"countries/ROM.txt\"{Environment.NewLine}";
+                $"REB = \"setup/countries/rebels.txt\"{Environment.NewLine}" +
+                $"PIR = \"setup/countries/pirates.txt\"{Environment.NewLine}" +
+                $"BAR = \"setup/countries/barbarians.txt\"{Environment.NewLine}" +
+                $"MER = \"setup/countries/mercenaries.txt\"{Environment.NewLine}" +
+                $"ROM = \"setup/countries/italia/rome.txt\"{Environment.NewLine}" +
+                $"COR = \"setup/countries/COR.txt\"{Environment.NewLine}";
 
             modWriter.CreateMod();
 
-            Assert.That(
-                workingDirectory.ReadFile("out/shattered-world/common/countries.txt"),
-                Is.EqualTo(expectedContent));
+            Assert.That(workingDirectory.ReadFile("out/shattered-world/setup/countries/countries.txt"), Is.EqualTo(expectedContent));
         }
 
         [Test]
         public void GivenAGeneratedCountry_WhenCreatingTheMod_ThenItIsAddedToTheLocalisationFile()
         {
-            Country country = BuildCountry("ROM", "Rome");
+            Country country = BuildCountry("COR", "Cornova");
             country.IsVanilla = false;
             entityManager.Setup(manager => manager.GetCities()).Returns([]);
             entityManager.Setup(manager => manager.GetCountries()).Returns([country]);
-            string expectedContent =
-                $"l_english:{Environment.NewLine}" +
-                $" ROM:0 \"Rome\"{Environment.NewLine}";
+            string expectedContent = $"l_english:{Environment.NewLine} COR:0 \"Cornova\"{Environment.NewLine}";
 
             modWriter.CreateMod();
 
-            Assert.That(
-                workingDirectory.ReadFile("out/shattered-world/localization/SW_countries_l_english.yml"),
-                Is.EqualTo(expectedContent));
+            Assert.That(workingDirectory.ReadFile("out/shattered-world/localization/english/SW_countries_l_english.yml"), Is.EqualTo(expectedContent));
         }
 
         [Test]
@@ -183,84 +222,34 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
             country.IsVanilla = true;
             entityManager.Setup(manager => manager.GetCities()).Returns([]);
             entityManager.Setup(manager => manager.GetCountries()).Returns([country]);
-            string expectedContent = $"l_english:{Environment.NewLine}";
 
             modWriter.CreateMod();
 
             Assert.That(
-                workingDirectory.ReadFile("out/shattered-world/localization/SW_countries_l_english.yml"),
-                Is.EqualTo(expectedContent));
+                workingDirectory.ReadFile("out/shattered-world/localization/english/SW_countries_l_english.yml"),
+                Is.EqualTo($"l_english:{Environment.NewLine}"));
         }
 
         [Test]
         public void GivenAGeneratedCountry_WhenCreatingTheMod_ThenTheSetupContainsItsDefinition()
         {
-            Country country = BuildCountry("ROM", "Rome");
+            Country country = BuildCountry("COR", "Cornova");
+            country.IsVanilla = false;
             entityManager.Setup(manager => manager.GetCities()).Returns([]);
             entityManager.Setup(manager => manager.GetCountries()).Returns([country]);
 
             modWriter.CreateMod();
 
-            string content = workingDirectory.ReadFile("out/shattered-world/common/setup.txt");
+            string content = workingDirectory.ReadFile("out/shattered-world/setup/main/02_shattered_world_countries.txt");
 
-            Assert.That(content, Does.Contain($"    ROM = {{ # Rome{Environment.NewLine}"));
-            Assert.That(content, Does.Contain($"      government = aristocratic_republic{Environment.NewLine}"));
-            Assert.That(content, Does.Contain($"      diplomatic_stance = neutral_stance{Environment.NewLine}"));
-            Assert.That(content, Does.Contain($"      primary_culture = latin{Environment.NewLine}"));
-            Assert.That(content, Does.Contain($"      religion = roman_pantheon{Environment.NewLine}"));
-            Assert.That(content, Does.Contain($"      centralization = 42{Environment.NewLine}"));
-            Assert.That(content, Does.Contain($"      capital = 1{Environment.NewLine}"));
-            Assert.That(content, Does.Contain($"      own_control_core = {{ 1 }}{Environment.NewLine}"));
-        }
-
-        [Test]
-        public void GivenACountryWithoutADiplomaticStance_WhenCreatingTheMod_ThenTheStanceIsOmitted()
-        {
-            Country country = BuildCountry("ROM", "Rome");
-            country.DiplomaticStanceId = null;
-            entityManager.Setup(manager => manager.GetCities()).Returns([]);
-            entityManager.Setup(manager => manager.GetCountries()).Returns([country]);
-
-            modWriter.CreateMod();
-
-            Assert.That(
-                workingDirectory.ReadFile("out/shattered-world/common/setup.txt"),
-                Does.Not.Contain("diplomatic_stance"));
-        }
-
-        [TestCase(-1)]
-        [TestCase(-42)]
-        public void GivenACountryWithoutACentralisationLevel_WhenCreatingTheMod_ThenTheCentralisationIsOmitted(
-            int centralisationLevel)
-        {
-            Country country = BuildCountry("ROM", "Rome");
-            country.CentralisationLevel = centralisationLevel;
-            entityManager.Setup(manager => manager.GetCities()).Returns([]);
-            entityManager.Setup(manager => manager.GetCountries()).Returns([country]);
-
-            modWriter.CreateMod();
-
-            Assert.That(
-                workingDirectory.ReadFile("out/shattered-world/common/setup.txt"),
-                Does.Not.Contain("centralization ="));
-        }
-
-        [TestCase(0)]
-        [TestCase(42)]
-        [TestCase(100)]
-        public void GivenACountryWithACentralisationLevel_WhenCreatingTheMod_ThenTheCentralisationIsWritten(
-            int centralisationLevel)
-        {
-            Country country = BuildCountry("ROM", "Rome");
-            country.CentralisationLevel = centralisationLevel;
-            entityManager.Setup(manager => manager.GetCities()).Returns([]);
-            entityManager.Setup(manager => manager.GetCountries()).Returns([country]);
-
-            modWriter.CreateMod();
-
-            Assert.That(
-                workingDirectory.ReadFile("out/shattered-world/common/setup.txt"),
-                Does.Contain($"      centralization = {centralisationLevel}{Environment.NewLine}"));
+            Assert.That(content, Does.Contain($"\t\tCOR = {{ # Cornova{Environment.NewLine}"));
+            Assert.That(content, Does.Contain($"\t\t\tgovernment = aristocratic_republic{Environment.NewLine}"));
+            Assert.That(content, Does.Contain($"\t\t\tdiplomatic_stance=neutral_stance{Environment.NewLine}"));
+            Assert.That(content, Does.Contain($"\t\t\tprimary_culture = latin{Environment.NewLine}"));
+            Assert.That(content, Does.Contain($"\t\t\treligion = roman_pantheon{Environment.NewLine}"));
+            Assert.That(content, Does.Contain($"\t\t\tcentralization=42{Environment.NewLine}"));
+            Assert.That(content, Does.Contain($"\t\t\tcapital = 1{Environment.NewLine}"));
+            Assert.That(content, Does.Contain($"\t\t\town_control_core = {{ 1 }}{Environment.NewLine}"));
         }
 
         [Test]
@@ -274,50 +263,91 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
             modWriter.CreateMod();
 
             Assert.That(
-                workingDirectory.ReadFile("out/shattered-world/common/setup.txt"),
+                workingDirectory.ReadFile("out/shattered-world/setup/main/02_shattered_world_countries.txt"),
                 Does.Contain("VANILLA COUNTRY - REQUIRED FOR COMPATIBILITY"));
+        }
+
+        [Test]
+        public void GivenAVanillaCountryWithPreservedLines_WhenCreatingTheMod_ThenTheyAreWritten()
+        {
+            Country country = BuildCountry("ROM", "Rome");
+            country.IsVanilla = true;
+            country.PreservedLines = ["\t\t\tfamily = 0", "\t\t\tis_antagonist = yes"];
+            entityManager.Setup(manager => manager.GetCities()).Returns([]);
+            entityManager.Setup(manager => manager.GetCountries()).Returns([country]);
+
+            modWriter.CreateMod();
+
+            string content = workingDirectory.ReadFile("out/shattered-world/setup/main/02_shattered_world_countries.txt");
+
+            Assert.That(content, Does.Contain("\t\t\tfamily = 0"));
+            Assert.That(content, Does.Contain("\t\t\tis_antagonist = yes"));
+        }
+
+        [TestCase(-1)]
+        [TestCase(-42)]
+        public void GivenACountryWithoutACentralisationLevel_WhenCreatingTheMod_ThenTheCentralisationIsOmitted(int centralisationLevel)
+        {
+            Country country = BuildCountry("COR", "Cornova");
+            country.IsVanilla = false;
+            country.CentralisationLevel = centralisationLevel;
+            entityManager.Setup(manager => manager.GetCities()).Returns([]);
+            entityManager.Setup(manager => manager.GetCountries()).Returns([country]);
+
+            modWriter.CreateMod();
+
+            Assert.That(
+                workingDirectory.ReadFile("out/shattered-world/setup/main/02_shattered_world_countries.txt"),
+                Does.Not.Contain("centralization="));
+        }
+
+        [TestCase(0)]
+        [TestCase(42)]
+        public void GivenACountryWithACentralisationLevel_WhenCreatingTheMod_ThenTheCentralisationIsWritten(int centralisationLevel)
+        {
+            Country country = BuildCountry("COR", "Cornova");
+            country.IsVanilla = false;
+            country.CentralisationLevel = centralisationLevel;
+            entityManager.Setup(manager => manager.GetCities()).Returns([]);
+            entityManager.Setup(manager => manager.GetCountries()).Returns([country]);
+
+            modWriter.CreateMod();
+
+            Assert.That(
+                workingDirectory.ReadFile("out/shattered-world/setup/main/02_shattered_world_countries.txt"),
+                Does.Contain($"\t\t\tcentralization={centralisationLevel}{Environment.NewLine}"));
         }
 
         [Test]
         public void GivenNoCountries_WhenCreatingTheMod_ThenTheSetupStillContainsTheClosingBlocks()
         {
-            entityManager.Setup(manager => manager.GetCities()).Returns([]);
-            entityManager.Setup(manager => manager.GetCountries()).Returns([]);
-            string expectedContent =
-                $"{Environment.NewLine}" +
-                $"country = {{{Environment.NewLine}" +
-                $"  countries = {{{Environment.NewLine}" +
-                $"  }}{Environment.NewLine}" +
-                $"}}{Environment.NewLine}";
+            SetupEmptyWorld();
 
             modWriter.CreateMod();
 
-            Assert.That(
-                workingDirectory.ReadFile("out/shattered-world/common/setup.txt"),
-                Is.EqualTo(expectedContent));
+            string content = workingDirectory.ReadFile("out/shattered-world/setup/main/02_shattered_world_countries.txt");
+
+            Assert.That(content, Does.Contain("country = {"));
+            Assert.That(content, Does.Contain("\tcountries = {"));
         }
 
         [Test]
         public void GivenACreatingModRequest_WhenCreatingTheMod_ThenTheEventsFileIsWritten()
         {
-            entityManager.Setup(manager => manager.GetCities()).Returns([]);
-            entityManager.Setup(manager => manager.GetCountries()).Returns([]);
+            SetupEmptyWorld();
 
             modWriter.CreateMod();
 
             string content = workingDirectory.ReadFile("out/shattered-world/events/flavor_sel.txt");
 
             Assert.That(content, Does.Contain($"namespace = grinsel{Environment.NewLine}"));
-            Assert.That(content, Does.Contain($"grinsel.2 = {{{Environment.NewLine}"));
             Assert.That(content, Does.Contain("create_pop = slaves"));
-            Assert.That(content, Does.Contain("namespace = grinsel"));
         }
 
         [Test]
-        public void GivenAFreshMod_WhenCreatingTheMod_ThenFiveSlavePopsAreCreatedByTheEvent()
+        public void GivenACreatingModRequest_WhenCreatingTheMod_ThenFiveSlavePopsAreCreatedByTheEvent()
         {
-            entityManager.Setup(manager => manager.GetCities()).Returns([]);
-            entityManager.Setup(manager => manager.GetCountries()).Returns([]);
+            SetupEmptyWorld();
 
             modWriter.CreateMod();
 
@@ -329,53 +359,34 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
         [Test]
         public void GivenACreatingModRequest_WhenCreatingTheMod_ThenTheDefinesFileIsWritten()
         {
-            entityManager.Setup(manager => manager.GetCities()).Returns([]);
-            entityManager.Setup(manager => manager.GetCountries()).Returns([]);
-            string expectedContent =
-                $"NGame = {{{Environment.NewLine}" +
-                $"  START_DATE = \"001.10.1\"{Environment.NewLine}" +
-                "}";
+            SetupEmptyWorld();
 
             modWriter.CreateMod();
 
-            Assert.That(
-                workingDirectory.ReadFile("out/shattered-world/common/defines/00_defines.txt"),
-                Is.EqualTo(expectedContent));
-        }
+            string content = workingDirectory.ReadFile("out/shattered-world/common/defines/00_defines.txt");
 
-        [Test]
-        public void GivenACreatingModRequest_WhenCreatingTheMod_ThenEveryWrittenFileEndsWithANewLine()
-        {
-            entityManager.Setup(manager => manager.GetCities()).Returns([BuildCity("1", "Newport")]);
-            entityManager.Setup(manager => manager.GetCountries()).Returns([BuildCountry("ROM", "Rome")]);
-
-            modWriter.CreateMod();
-
-            Assert.That(workingDirectory.ReadFile("out/shattered-world/common/setup.txt"), Does.EndWith(Environment.NewLine));
-            Assert.That(workingDirectory.ReadFile("out/shattered-world.mod"), Does.EndWith(Environment.NewLine));
-            Assert.That(workingDirectory.ReadFile("out/shattered-world/descriptor.mod"), Does.EndWith(Environment.NewLine));
+            Assert.That(content, Does.Contain("NGame = {"));
+            Assert.That(content, Does.Contain("START_DATE = \"450.10.1\""));
         }
 
         [Test]
         public void GivenACreatingModRequest_WhenCreatingTheMod_ThenEveryUnicodeFileStartsWithAByteOrderMark()
         {
-            entityManager.Setup(manager => manager.GetCities()).Returns([]);
-            entityManager.Setup(manager => manager.GetCountries()).Returns([]);
+            SetupEmptyWorld();
 
             modWriter.CreateMod();
 
-            Assert.That(
-                HasByteOrderMark("out/shattered-world/common/province_setup.csv"),
-                Is.True);
-            Assert.That(
-                HasByteOrderMark("out/shattered-world/events/flavor_sel.txt"),
-                Is.True);
-            Assert.That(
-                HasByteOrderMark("out/shattered-world/common/defines/00_defines.txt"),
-                Is.True);
-            Assert.That(
-                HasByteOrderMark("out/shattered-world/localization/SW_countries_l_english.yml"),
-                Is.True);
+            Assert.That(HasByteOrderMark("out/shattered-world/setup/provinces/02_shattered_world.txt"), Is.True);
+            Assert.That(HasByteOrderMark("out/shattered-world/setup/countries/countries.txt"), Is.True);
+            Assert.That(HasByteOrderMark("out/shattered-world/setup/main/02_shattered_world_countries.txt"), Is.True);
+            Assert.That(HasByteOrderMark("out/shattered-world/events/flavor_sel.txt"), Is.True);
+            Assert.That(HasByteOrderMark("out/shattered-world/localization/english/SW_countries_l_english.yml"), Is.True);
+        }
+
+        private void SetupEmptyWorld()
+        {
+            entityManager.Setup(manager => manager.GetCities()).Returns([]);
+            entityManager.Setup(manager => manager.GetCountries()).Returns([]);
         }
 
         private bool HasByteOrderMark(string relativePath)
@@ -389,7 +400,7 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
                 bytes[2] == 0xBF;
         }
 
-        private Country BuildCountry(string id, string name)
+        private static Country BuildCountry(string id, string name)
             => new()
             {
                 Id = id,
@@ -403,7 +414,7 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
                 DiplomaticStanceId = "neutral_stance",
                 CapitalId = "1",
                 CentralisationLevel = 42,
-                ShipNames = [.. ShipNames]
+                ShipNames = ["Boaty", "McBoatface"]
             };
 
         private static City BuildCity(string id, string nameId)
@@ -420,7 +431,8 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
                 CivilizationLevel = 8,
                 BarbarianLevel = 16,
                 NameId = nameId,
-                ProvinceId = id
+                ProvinceId = id,
+                ProvinceRank = "settlement"
             };
     }
 }

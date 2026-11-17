@@ -237,12 +237,27 @@ namespace ImperatorShatteredWorldGenerator.UnitTests.Service
             City capital = BuildCity("1", "Newport");
             entityManager.Setup(manager => manager.GetCityIds()).Returns([]);
             entityManager.Setup(manager => manager.GetCountries()).Returns(countries);
+            entityManager.Setup(manager => manager.GetCity("1")).Returns(capital);
             cityGenerator.Setup(generator => generator.GenerateCapital(countries[0])).Returns(capital);
 
             shatteredWorldGenerator.Generate();
 
             entityManager.Verify(manager => manager.UpdateCity(capital), Times.Once);
             cityGenerator.Verify(generator => generator.GenerateCapital(countries[0]), Times.Once);
+        }
+
+        [Test]
+        public void GivenACountryWhoseCapitalIsNotALoadedCity_WhenGeneratingCapitals_ThenTheCapitalIsSkipped()
+        {
+            List<Country> countries = [new Country { Id = "ROM", CapitalId = "9999" }];
+            entityManager.Setup(manager => manager.GetCityIds()).Returns([]);
+            entityManager.Setup(manager => manager.GetCountries()).Returns(countries);
+            entityManager.Setup(manager => manager.GetCity(It.IsAny<string>())).Returns((City)null);
+
+            shatteredWorldGenerator.Generate();
+
+            cityGenerator.Verify(generator => generator.GenerateCapital(It.IsAny<Country>()), Times.Never);
+            entityManager.Verify(manager => manager.UpdateCity(It.IsAny<City>()), Times.Never);
         }
 
         [Test]
@@ -256,6 +271,7 @@ namespace ImperatorShatteredWorldGenerator.UnitTests.Service
                 .Returns(["1"]);
             entityManager.Setup(manager => manager.GetCities()).Returns([BuildCity("1", "Newport")]);
             entityManager.Setup(manager => manager.GetCountries()).Returns(() => countries);
+            entityManager.Setup(manager => manager.GetCity(It.IsAny<string>())).Returns(() => BuildCity("1", "Newport"));
             entityManager.Setup(manager => manager.AddCountry(It.IsAny<Country>()))
                 .Callback<Country>(country => countries.Add(country));
             cityGenerator.Setup(generator => generator.GenerateCity("1")).Returns(BuildCity("1", "Newport"));

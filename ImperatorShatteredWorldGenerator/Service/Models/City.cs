@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace ImperatorShatteredWorldGenerator.Service.Models
 {
     public sealed class City
@@ -26,6 +28,10 @@ namespace ImperatorShatteredWorldGenerator.Service.Models
 
         public string ProvinceId { get; set; }
 
+        public string ProvinceRank { get; set; }
+
+        public IEnumerable<string> PreservedLines { get; set; }
+
         public int TotalPopulation => CitizensCount + FreemenCount + TribesmenCount + SlavesCount;
 
         public bool IsHabitable =>
@@ -34,6 +40,5 @@ namespace ImperatorShatteredWorldGenerator.Service.Models
             !string.IsNullOrWhiteSpace(TradeGoodId) &&
             !string.IsNullOrWhiteSpace(NameId) &&
             !string.IsNullOrWhiteSpace(ProvinceId);
-            
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 using ImperatorShatteredWorldGenerator.DataAccess.DataObjects;
@@ -15,15 +16,16 @@ namespace ImperatorShatteredWorldGenerator.Service.Mapping
             serviceModel.CultureId = dataObject.CultureId;
             serviceModel.ReligionId = dataObject.ReligionId;
             serviceModel.TradeGoodId = dataObject.TradeGoodId;
-            serviceModel.TribesmenCount = dataObject.TribesmenCount;
             serviceModel.CitizensCount = dataObject.CitizensCount;
             serviceModel.FreemenCount = dataObject.FreemenCount;
             serviceModel.TribesmenCount = dataObject.TribesmenCount;
             serviceModel.SlavesCount = dataObject.SlavesCount;
-            serviceModel.CivilizationLevel = int.Parse(dataObject.CivilizationLevel);
-            serviceModel.BarbarianLevel = int.Parse(dataObject.BarbarianLevel);
+            serviceModel.CivilizationLevel = ParseLevel(dataObject.CivilizationLevel);
+            serviceModel.BarbarianLevel = ParseLevel(dataObject.BarbarianLevel);
             serviceModel.NameId = dataObject.NameId;
             serviceModel.ProvinceId = dataObject.ProvinceId;
+            serviceModel.ProvinceRank = dataObject.ProvinceRank;
+            serviceModel.PreservedLines = dataObject.PreservedLines;
 
             return serviceModel;
         }
@@ -35,7 +37,6 @@ namespace ImperatorShatteredWorldGenerator.Service.Mapping
             dataObject.CultureId = serviceModel.CultureId;
             dataObject.ReligionId = serviceModel.ReligionId;
             dataObject.TradeGoodId = serviceModel.TradeGoodId;
-            dataObject.TribesmenCount = serviceModel.TribesmenCount;
             dataObject.CitizensCount = serviceModel.CitizensCount;
             dataObject.FreemenCount = serviceModel.FreemenCount;
             dataObject.TribesmenCount = serviceModel.TribesmenCount;
@@ -44,6 +45,8 @@ namespace ImperatorShatteredWorldGenerator.Service.Mapping
             dataObject.BarbarianLevel = serviceModel.BarbarianLevel.ToString();
             dataObject.NameId = serviceModel.NameId;
             dataObject.ProvinceId = serviceModel.ProvinceId;
+            dataObject.ProvinceRank = serviceModel.ProvinceRank;
+            dataObject.PreservedLines = serviceModel.PreservedLines;
 
             return dataObject;
         }
@@ -53,6 +56,26 @@ namespace ImperatorShatteredWorldGenerator.Service.Mapping
             IEnumerable<City> serviceModels = dataObjects.Select(dataObject => dataObject.ToServiceModel());
 
             return serviceModels;
+        }
+
+        static int ParseLevel(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return 0;
+            }
+
+            if (int.TryParse(value, out int integerValue))
+            {
+                return integerValue;
+            }
+
+            if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double decimalValue))
+            {
+                return (int)decimalValue;
+            }
+
+            return 0;
         }
     }
 }

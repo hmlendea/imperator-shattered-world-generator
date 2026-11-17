@@ -1,9 +1,13 @@
+using System.Collections.Generic;
+
 using NuciDAL.DataObjects;
 
 namespace ImperatorShatteredWorldGenerator.DataAccess.DataObjects
 {
     public sealed class CityEntity : EntityBase
     {
+        public string NameId { get; set; }
+
         public string CultureId { get; set; }
 
         public string ReligionId { get; set; }
@@ -22,8 +26,10 @@ namespace ImperatorShatteredWorldGenerator.DataAccess.DataObjects
 
         public string BarbarianLevel { get; set; }
 
-        public string NameId { get; set; }
-
         public string ProvinceId { get; set; }
+
+        public string ProvinceRank { get; set; }
+
+        public IEnumerable<string> PreservedLines { get; set; }
     }
 }

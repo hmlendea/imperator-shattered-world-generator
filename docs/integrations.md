@@ -16,12 +16,12 @@ The application integrates with the local machine only. There is no HTTP client,
 
 | File | Consumed by | Format |
 |------|-------------|--------|
-| `game/common/province_setup.csv` | `CsvRepository<CityEntity>` | Header line beginning with `#`, then comma-separated rows in the order of `CityEntity`'s properties |
-| `game/common/setup.txt` | Regex line scan | Tab-indented blocks; each contains `government`, `diplomatic_stance`, `primary_culture`, `religion`, `centralization`, `capital` |
-| `game/common/countries.txt` | Regex line scan | `<Tag> = "<relative path>"` |
-| `game/common/countries/**.txt` | Regex over file content | Contains `color = rgb { r g b }` |
+| `game/setup/provinces/*.txt` | Clausewitz text scan | One block per province keyed by province id; each contains `culture`, `religion`, `trade_goods`, `province_rank`, `civilization_value`, `barbarian_power`, and pop sub-blocks (`citizen`, `freemen`, `slaves`, `tribesmen`) |
+| `game/map_data/definition.csv` | `CsvFile<ProvinceDefinitionEntity>` | Semicolon-separated; column 1 is the province id, column 5 the province name; commented (`#`) rows are ignored |
+| `game/setup/main/*.txt` | Clausewitz text scan | `country = { countries = { <TAG> = { government, diplomatic_stance, primary_culture, religion, centralization, capital, own_control_core } } }` |
+| `game/setup/countries/countries.txt` | Regex line scan | `<Tag> = "<relative path>"`, where the path is relative to the game directory |
 | `game/localization/english/countries_l_english.yml` | Regex line scan | `<Tag>:0 "<localised name>"` |
-| `game/common/cultures/**.txt` | Regex line scan | Empty blocks at two-tab indentation, e.g. `\t\tmunicipal = {}` |
+| `game/common/cultures/**.txt` | Clausewitz text scan | A top-level group block containing a `culture = { ... }` block whose two-tab entries are the subculture identifiers |
 | `game/common/religions/00_default.txt` | Regex line scan | Block headers |
 | `game/common/governments/**.txt` | Regex line scan | Block headers |
 | `game/common/diplomatic_stances/**.txt` | Regex line scan | Block headers |
@@ -35,6 +35,10 @@ All parsing is tolerant of missing optional content but strict about missing fil
 | `out/<mod-id>/` | Game mod loader | Must exist at the path declared in the descriptor's `path` field |
 | `out/<mod-id>.mod` | Game mod launcher / installers | Declares `name` and `path` |
 | `out/<mod-id>/descriptor.mod` | Distribution | Duplicated so that archiving the directory yields a complete mod |
+| `out/<mod-id>/setup/provinces/02_shattered_world.txt` | Game province database | One randomised block per habitable province, keyed by province id |
+| `out/<mod-id>/setup/countries/<TAG>.txt` | Game country database | Colour and ship names for each generated country |
+| `out/<mod-id>/setup/countries/countries.txt` | Game country database | The fixed entries plus every vanilla and generated tag |
+| `out/<mod-id>/setup/main/02_shattered_world_countries.txt` | Game setup database | One `countries` block with every country's government, stance, culture, religion, centralisation, capital, and `own_control_core` |
 
 Because the descriptor declares `path = "mod/<mod-id>"`, the mod must be placed under the game's mod folder with the same relative layout. The application writes into `out/` relative to the working directory and does not install into the game folder.
 

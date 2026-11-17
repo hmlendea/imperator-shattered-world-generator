@@ -80,6 +80,6 @@ Because mapping is internal and confined to the production assembly, an external
 
 ## Modification impact
 
-- Adding a city attribute requires `CityEntity`, `CityMapping` in both directions, `ModWriter.WriteProvincesSetup`, and possibly the CSV column order.
+- Adding a city attribute requires `CityEntity`, `CityMapping` in both directions, `ModWriter.WriteProvinces`, and possibly the definition CSV mapping.
 - Adding a country attribute requires only `Country` and `ModWriter`, because countries have no data object.
 - Removing `IsHabitable` checks would allow cities without culture or name into country generation, producing countries with blank identity and duplicate localisation keys.
