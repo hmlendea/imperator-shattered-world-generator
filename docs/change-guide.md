@@ -28,7 +28,7 @@ Breaking risk: the CSV column order is positional for the game. Appending at the
 1. `Service/Models/Country.cs` — add the property with a neutral default.
 2. `Service/CountryGenerator.cs` — assign it in `GenerateCountry`, being explicit about draw order.
 3. `Service/EntitiesLoader.cs` — parse it in the backward-scan block when vanilla values matter.
-4. `Service/ModWriter.cs` — write it in `WriteSetupFile` or `WriteCountryFiles`.
+4. `Service/ModWriter.cs` — write it in `WriteCountrySetupFile` or `WriteCountryFiles`.
 5. Update `CountryTests`, `CountryGeneratorTests`, both integration fixtures, and any seed-sensitive expectation.
 6. Synchronise [Data Model](./data-model.md).
 

@@ -2,15 +2,8 @@ using System;
 
 namespace ImperatorShatteredWorldGenerator.UnitTests
 {
-    internal sealed class StubRandom : Random
+    internal sealed class StubRandom(int nextValue) : Random
     {
-        private readonly int nextValue;
-
-        public StubRandom(int nextValue)
-        {
-            this.nextValue = nextValue;
-        }
-
         public override int Next(int maximumValue)
         {
             if (maximumValue <= 0)

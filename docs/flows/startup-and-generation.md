@@ -55,4 +55,4 @@ Skipped entirely when `RandomCountriesCount == 0`. Otherwise the first `GetCitie
 | Inspect a single city draw | `CityGenerator.GenerateCity` |
 | Inspect pool composition | `ShatteredWorldGenerator.GenerateCountries` after the LINQ chain |
 | Inspect a country draw | `CountryGenerator.GenerateCountry` |
-| Inspect output content | `ModWriter.WriteSetupFile` before `WriteFile` |
+| Inspect output content | `ModWriter.WriteCountrySetupFile` before `WriteUnicodeFile` |

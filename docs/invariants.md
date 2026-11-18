@@ -6,12 +6,12 @@ Constraints that must remain true unless a change is explicitly intended to alte
 
 | Invariant | Enforced by | Verified by |
 |-----------|-------------|-------------|
-| Every vanilla country is present in `setup.txt` | `ShatteredWorldGenerator` never removes; `ModWriter.WriteSetupFile` writes all countries | `ModWriterTests.GivenAVanillaCountry_WhenCreatingTheMod_ThenACompatibilityNoticeIsWritten` |
+| Every vanilla country with a capital is present in the setup file | `ShatteredWorldGenerator` never removes; `ModWriter.WriteCountrySetupFile` writes all countries | `ModWriterTests.GivenAVanillaCountry_WhenCreatingTheMod_ThenACompatibilityNoticeIsWritten` |
 | Vanilla countries are restricted to their capital | `own_control_core = { <capital> }` written for every country | `ModWriterTests.GivenAGeneratedCountry_WhenCreatingTheMod_ThenTheSetupContainsItsDefinition` |
 | Reserved tags `REB`, `PIR`, `BAR`, `MER` are never generated | `CountryGenerator.DisallowedCountryIds` | `CountryGeneratorTests` (two reserved-name cases) |
 | `countries.txt` always lists the four reserved entries first | `WriteCountriesDefinitionIndexFile` | `ModWriterTests.GivenCountries_WhenCreatingTheMod_ThenTheDefinitionIndexListsTheDefaultEntriesAndEveryCountry` |
-| Files with non-ASCII content carry a UTF-8 BOM | `WriteUnicodeFile` | `ModWriterTests.GivenACreatingModRequest_WhenCreatingTheMod_ThenEveryUnicodeFileStartsWithAByteOrderMark` |
-| The `province_setup.csv` header is emitted verbatim | `WriteProvincesSetup` | `ModWriterTests` header assertions |
+| Every written file carries a UTF-8 BOM | `WriteUnicodeFile` | `ModWriterTests.GivenACreatingModRequest_WhenCreatingTheMod_ThenEveryUnicodeFileStartsWithAByteOrderMark` |
+| The province file merges with the vanilla province files | `WriteProvinces` names the file `02_shattered_world.txt` | `ModWriterTests` path assertions |
 
 ## Output identity
 
@@ -44,7 +44,7 @@ Constraints that must remain true unless a change is explicitly intended to alte
 |-----------|-------------|-------------|
 | `--dir` and `--name` are mandatory | `GetRequiredArgumentValue` | Not covered by tests |
 | Documented defaults are the constructor values | `GeneratorSettings` constructor | `GeneratorSettingsTests` (three default tests) |
-| `CentralisationLevel == -1` means "unset" | `Country` constructor and `WriteSetupFile` guard | `CountryTests`, `ModWriterTests` (two `TestCase(-1/-42)` cases) |
+| `CentralisationLevel == -1` means "unset" | `Country` constructor and `WriteCountrySetupFile` guard | `CountryTests`, `ModWriterTests` (two `TestCase(-1/-42)` cases) |
 | `RandomCountriesCount == 0` produces no generated countries | Early return in `GenerateCountries` | `ShatteredWorldGeneratorTests` |
 
 ## Determinism

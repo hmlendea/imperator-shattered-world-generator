@@ -21,10 +21,14 @@ namespace ImperatorShatteredWorldGenerator.Service.Models
         public string GovernmentId { get; set; }
 
         public string DiplomaticStanceId { get; set; }
-        
+
         public string CapitalId { get; set; }
 
         public int CentralisationLevel { get; set; }
+
+        public string DefinitionFilePath { get; set; }
+
+        public IEnumerable<string> PreservedLines { get; set; }
 
         public IEnumerable<string> ShipNames { get; set; }
 

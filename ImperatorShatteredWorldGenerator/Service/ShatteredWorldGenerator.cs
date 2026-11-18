@@ -8,31 +8,14 @@ using ImperatorShatteredWorldGenerator.Service.Models;
 
 namespace ImperatorShatteredWorldGenerator.Service
 {
-    public sealed class ShatteredWorldGenerator : IShatteredWorldGenerator
+    public sealed class ShatteredWorldGenerator(
+        IEntityManager entityManager,
+        ICityGenerator cityGenerator,
+        ICountryGenerator countryGenerator,
+        IModWriter modWriter,
+        IRandomNumberGenerator rng,
+        GeneratorSettings settings) : IShatteredWorldGenerator
     {
-        readonly IEntityManager entityManager;
-        readonly ICityGenerator cityGenerator;
-        readonly ICountryGenerator countryGenerator;
-        readonly IModWriter modWriter;
-        readonly IRandomNumberGenerator rng;
-        readonly GeneratorSettings settings;
-
-        public ShatteredWorldGenerator(
-            IEntityManager entityManager,
-            ICityGenerator cityGenerator,
-            ICountryGenerator countryGenerator,
-            IModWriter modWriter,
-            IRandomNumberGenerator rng,
-            GeneratorSettings settings)
-        {
-            this.entityManager = entityManager;
-            this.cityGenerator = cityGenerator;
-            this.countryGenerator = countryGenerator;
-            this.modWriter = modWriter;
-            this.rng = rng;
-            this.settings = settings;
-        }
-
         public void Generate()
         {
             GenerateCities();
@@ -57,7 +40,7 @@ namespace ImperatorShatteredWorldGenerator.Service
             {
                 return;
             }
-            
+
             IList<string> validCityIds = entityManager
                 .GetCities()
                 .Where(city =>
@@ -74,16 +57,21 @@ namespace ImperatorShatteredWorldGenerator.Service
             {
                 string cityId = validCityIds.GetRandomElement(rng.Randomiser);
                 Country country = countryGenerator.GenerateCountry(cityId);
-                
+
                 entityManager.AddCountry(country);
                 validCityIds.Remove(cityId);
             }
         }
-        
+
         void GenerateCapitals()
         {
             foreach (Country country in entityManager.GetCountries())
             {
+                if (string.IsNullOrWhiteSpace(country.CapitalId) || entityManager.GetCity(country.CapitalId) is null)
+                {
+                    continue;
+                }
+
                 City capital = cityGenerator.GenerateCapital(country);
                 entityManager.UpdateCity(capital);
             }

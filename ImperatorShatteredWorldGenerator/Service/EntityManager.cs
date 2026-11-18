@@ -5,10 +5,8 @@ using ImperatorShatteredWorldGenerator.Service.Models;
 
 namespace ImperatorShatteredWorldGenerator.Service
 {
-    public sealed class EntityManager : IEntityManager
+    public sealed class EntityManager(IEntityLoader entityLoader) : IEntityManager
     {
-        readonly IEntityLoader entityLoader;
-
         IDictionary<string, City> cities;
         IDictionary<string, Country> countries;
 
@@ -16,11 +14,6 @@ namespace ImperatorShatteredWorldGenerator.Service
         IEnumerable<string> religionIds;
         IEnumerable<string> governmentIds;
         IEnumerable<string> diplomaticStanceIds;
-
-        public EntityManager(IEntityLoader entityLoader)
-        {
-            this.entityLoader = entityLoader;
-        }
 
         public City GetCity(string id)
         {

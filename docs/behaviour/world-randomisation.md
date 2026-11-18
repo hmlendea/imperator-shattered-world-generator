@@ -2,7 +2,7 @@
 
 ## What changes
 
-Every city present in the vanilla `province_setup.csv` is rewritten:
+Every city present in the vanilla `setup/provinces` files is rewritten:
 
 | Attribute | New value |
 |-----------|-----------|
@@ -17,13 +17,13 @@ Unchanged: province identifier, trade good, name reference, and province referen
 
 ## What happens to the vanilla countries
 
-Every vanilla country is preserved and restricted to its capital. In the generated `setup.txt` each vanilla country keeps its identifier, government, stance (when present), culture, religion, and capital, and gains `own_control_core = { <capital> }`, which limits ownership to that one province. Two comment lines mark vanilla countries as required for compatibility.
+Every vanilla country with a capital is preserved and restricted to its capital. In the generated `setup/main` file each vanilla country keeps its identifier, government, stance (when present), culture, religion, and capital, and gains `own_control_core = { <capital> }`, which limits ownership to that one province. Two comment lines mark vanilla countries as required for compatibility.
 
 Vanilla countries are **never removed**, because the base game's events reference them and fail after enough in-game years if the tags are missing.
 
 ## What happens to vanilla cities that are not capitals
 
-They remain in the `province_setup.csv` with randomised attributes but belong to no country unless they become the capital of a generated country. The mod does not assign ownership beyond `own_control_core`, so the resulting political map consists of one-province countries.
+They remain in the `setup/provinces` files with randomised attributes but belong to no country unless they become the capital of a generated country. The mod does not assign ownership beyond `own_control_core`, so the resulting political map consists of one-province countries.
 
 ## What is added
 
@@ -32,8 +32,8 @@ They remain in the `province_setup.csv` with randomised attributes but belong to
 | Generated countries | `RandomCountriesCount` (default `500`) | Vacant habitable cities, one per distinct name |
 | Country files | One per country, vanilla and generated | `country.Id` |
 | Localisation entries | One per generated country | `country.Name` |
-| Event file | One | Fixed `grinsel.2` province event granting five slave pops |
-| Defines file | One | Start date `001.10.1` |
+| Event file | One | Fixed `grinsel.2` country event granting five slave pops |
+| Defines file | One | Start date `450.10.1` |
 
 ## What is not changed
 
@@ -46,12 +46,12 @@ They remain in the `province_setup.csv` with randomised attributes but belong to
 For a world with three vanilla countries and `--random-countries 2`:
 
 ```text
-province_setup.csv  -> every city, randomised
-common/countries.txt -> REB, PIR, BAR, MER, <vanilla ids…>, <2 new ids>
-localization/SW_countries_l_english.yml -> l_english: + 2 entries
-common/setup.txt -> vanilla countries with compatibility comments + 2 new countries
-common/countries/<id>.txt -> one per country, each with colour and ship names
-events/flavor_sel.txt, common/defines/00_defines.txt -> fixed content
+setup/provinces/02_shattered_world.txt -> every habitable province, randomised
+setup/countries/countries.txt -> REB, PIR, BAR, MER, <vanilla paths...>, <2 new ids>
+localization/english/SW_countries_l_english.yml -> l_english: + 2 entries
+setup/main/00_default.txt -> vanilla countries with compatibility comments + 2 new countries
+setup/countries/<id>.txt -> one per generated country, each with colour and ship names
+events/SW_events.txt -> fixed content
 ```
 
 ## Observable limits

@@ -19,7 +19,9 @@ Declared in `ImperatorShatteredWorldGenerator/Service/Models/City.cs` as a `seal
 | `CivilizationLevel` | `int` | Set | Civilisation level |
 | `BarbarianLevel` | `int` | Set | Barbarian level |
 | `NameId` | `string` | Set | Name reference used for localisation and for country naming |
-| `ProvinceId` | `string` | Set | Province reference written to the `AraRef` column |
+| `ProvinceId` | `string` | Set | The province identifier the city was loaded from |
+| `ProvinceRank` | `string` | Set | Vanilla province rank (`settlement`, `city`, `city_metropolis`) |
+| `PreservedLines` | `IEnumerable<string>` | Set | Vanilla block lines the mod does not manage and re-emits verbatim |
 | `TotalPopulation` | `int` | Derived | Sum of the four population components |
 | `IsHabitable` | `bool` | Derived | True only when `CultureId`, `ReligionId`, `TradeGoodId`, `NameId`, and `ProvinceId` are all non-whitespace |
 
@@ -42,6 +44,8 @@ Declared in `ImperatorShatteredWorldGenerator/Service/Models/Country.cs`.
 | `DiplomaticStanceId` | `string` | `null` | Diplomatic stance; omitted from `setup.txt` when blank |
 | `CapitalId` | `string` | `null` | Capital city identifier |
 | `CentralisationLevel` | `int` | `-1` | Sentinel meaning *unset*; never written when negative |
+| `DefinitionFilePath` | `string` | `null` | Vanilla file path referenced by the country index |
+| `PreservedLines` | `IEnumerable<string>` | `null` | Vanilla setup lines the mod does not manage and re-emits verbatim |
 | `ShipNames` | `IEnumerable<string>` | Six fixed names | Written verbatim into each country file |
 | `IsVanilla` | `bool` | `false` | Distinguishes preserved vanilla countries from generated ones |
 
@@ -53,13 +57,11 @@ Constructor-set defaults:
 
 ### `CityEntity`
 
-Declared in `ImperatorShatteredWorldGenerator/DataAccess/DataObjects/CityEntity.cs`, deriving from `NuciDAL.DataObjects.EntityBase`. It is a serialisation shape only: `CivilizationLevel` and `BarbarianLevel` are `string` here and `int` in `City`, because the CSV repository maps columns positionally to strings.
+Declared in `ImperatorShatteredWorldGenerator/DataAccess/DataObjects/CityEntity.cs`, deriving from `NuciDAL.DataObjects.EntityBase`. It is a serialisation shape only: `CivilizationLevel` and `BarbarianLevel` are `string` here and `int` in `City`, so that fractional vanilla values survive the parse.
 
-Property order defines the CSV column order consumed by `CsvRepository<CityEntity>`:
+### `ProvinceDefinitionEntity`
 
-```text
-Id, CultureId, ReligionId, TradeGoodId, CitizensCount, FreemenCount, TribesmenCount, SlavesCount, CivilizationLevel, BarbarianLevel, NameId, ProvinceId
-```
+Declared in `ImperatorShatteredWorldGenerator/DataAccess/DataObjects/ProvinceDefinitionEntity.cs`, deriving from `EntityBase` and annotated with `CsvColumn` attributes. It maps the semicolon-separated `map_data/definition.csv`: `EntityBase.Id` is column 1, and `Red`, `Green`, `Blue`, and `Name` are columns 2–5.
 
 ## Mapping
 
@@ -67,41 +69,36 @@ Id, CultureId, ReligionId, TradeGoodId, CitizensCount, FreemenCount, TribesmenCo
 
 | Method | Direction | Conversion |
 |--------|-----------|------------|
-| `ToServiceModel(this CityEntity)` | data object → domain | `int.Parse` on `CivilizationLevel` and `BarbarianLevel` |
+| `ToServiceModel(this CityEntity)` | data object → domain | Lenient parse of `CivilizationLevel` and `BarbarianLevel`, truncating fractional values |
 | `ToDataObject(this City)` | domain → data object | `ToString()` on the two level fields |
-| `ToServiceModels(this IEnumerable<CityEntity>)` | collection → collection | Lazy `Select` projection |
-
-Note that `CityMapping.ToServiceModel` assigns `TribesmenCount` twice and `ToDataObject` does the same; the duplicate assignment is harmless because the same value is written both times, but it is a wart to leave alone unless intentionally cleaning up. See [Ambiguities and Open Questions](./ambiguities-and-open-questions.md).
+| `ToServiceModels(this IEnumerable<CityEntity>)` | collection → collection | `Select` projection |
 
 ## Vanilla-to-mod field mapping
 
-### `province_setup.csv`
+### `setup/provinces`
 
-| Written column | Source |
-|----------------|--------|
-| `ProvID` | `City.Id` |
-| `Culture` | `City.CultureId` |
-| `Religion` | `City.ReligionId` |
-| `TradeGoods` | `City.TradeGoodId` |
-| `Citizens` | `City.CitizensCount` |
-| `Freedmen` | `City.FreemenCount` |
-| `Slaves` | `City.SlavesCount` |
-| `Tribesmen` | `City.TribesmenCount` |
-| `Civilization` | `City.CivilizationLevel` |
-| `Barbarian` | `City.BarbarianLevel` |
-| `NameRef` | `City.NameId` |
-| `AraRef` | `City.ProvinceId` |
+Each habitable city is written as a province block in `out/<mod-id>/setup/provinces/02_shattered_world.txt`:
 
-The header written by `ModWriter.WriteProvincesSetup` orders the population columns `Citizens;Freedmen;Slaves;Tribesmen`, while the data rows are written `Citizens,Freemen,Tribesmen,Slaves`. The data-row order matches `CityEntity`'s property order, which is what the reader relies on; the header order therefore disagrees with the values. See [Ambiguities and Open Questions](./ambiguities-and-open-questions.md).
+| Written attribute | Source |
+|-------------------|--------|
+| province id key | `City.Id` |
+| `barbarian_power` | `City.BarbarianLevel` |
+| `civilization_value` | `City.CivilizationLevel` |
+| `culture` | `City.CultureId` |
+| `province_rank` | `City.ProvinceRank` |
+| `religion` | `City.ReligionId` |
+| `trade_goods` | `City.TradeGoodId` |
+| preserved lines | `City.PreservedLines` |
+| `citizen` / `freemen` / `slaves` / `tribesmen` blocks | the four population counters, each emitted only when positive |
 
 ### Country files and definitions
 
 | Output | Source |
 |--------|--------|
-| `out/<mod-id>/common/countries/<Id>.txt` | `colour = rgb { r g b }` from the three colour components plus a `ship_names` block from `ShipNames` |
-| `out/<mod-id>/common/countries.txt` | Four fixed entries (`REB`, `PIR`, `BAR`, `MER`) plus one line per country |
-| `out/<mod-id>/localization/SW_countries_l_english.yml` | One ` Id:0 "Name"` line per non-vanilla country |
-| `out/<mod-id>/common/setup.txt` | One block per country with government, optional stance, culture, religion, optional centralisation, capital, and `own_control_core` |
+| `out/<mod-id>/setup/countries/<Id>.txt` | `color = rgb { r g b }` from the three colour components plus a `ship_names` block from `ShipNames`, for generated countries only |
+| `out/<mod-id>/setup/countries/countries.txt` | Four fixed entries (`REB`, `PIR`, `BAR`, `MER`) plus one line per country (vanilla countries keep their original relative path) |
+| `out/<mod-id>/localization/english/SW_countries_l_english.yml` | One ` Id:0 "Name"` line per non-vanilla country |
+| `out/<mod-id>/setup/main/00_default.txt` | One block per country with government, optional stance, culture, religion, optional centralisation, capital, preserved lines, and `own_control_core` |
 
 ## Relationship model
 

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization;
 
 using NUnit.Framework;
 
@@ -14,9 +13,6 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
     [TestFixture]
     public sealed class EntitiesLoaderTests
     {
-        private const string CityHeader =
-            "1,roman,pagan,grain,4,8,16,32,8,16,Newport,1\n";
-
         private TemporaryDirectory gameDirectory = null!;
         private EntitiesLoader entitiesLoader = null!;
 
@@ -31,9 +27,10 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
         public void TearDown() => gameDirectory.Dispose();
 
         [Test]
-        public void GivenAProvinceSetupFile_WhenLoadingCities_ThenEveryCityIsMappedToAServiceModel()
+        public void GivenAProvinceSetupFile_WhenLoadingCities_ThenEveryHabitableCityIsMappedToAServiceModel()
         {
-            gameDirectory.WriteFile("game/common/province_setup.csv", CityHeader);
+            WriteProvinceDefinitions((1, "Newport"));
+            gameDirectory.WriteFile("game/setup/provinces/00_latin_region.txt", BuildProvinceBlock("1", "roman", "settlement"));
 
             List<City> cities = [.. entitiesLoader.LoadCities()];
 
@@ -43,28 +40,54 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
 
             Assert.That(city.Id, Is.EqualTo("1"));
             Assert.That(city.CultureId, Is.EqualTo("roman"));
-            Assert.That(city.ReligionId, Is.EqualTo("pagan"));
+            Assert.That(city.ReligionId, Is.EqualTo("roman_pantheon"));
             Assert.That(city.TradeGoodId, Is.EqualTo("grain"));
             Assert.That(city.CitizensCount, Is.EqualTo(4));
-            Assert.That(city.FreemenCount, Is.EqualTo(8));
-            Assert.That(city.TribesmenCount, Is.EqualTo(16));
-            Assert.That(city.SlavesCount, Is.EqualTo(32));
             Assert.That(city.CivilizationLevel, Is.EqualTo(8));
-            Assert.That(city.BarbarianLevel, Is.EqualTo(16));
+            Assert.That(city.BarbarianLevel, Is.EqualTo(0));
             Assert.That(city.NameId, Is.EqualTo("Newport"));
             Assert.That(city.ProvinceId, Is.EqualTo("1"));
-            Assert.That(city.TotalPopulation, Is.EqualTo(60));
+            Assert.That(city.ProvinceRank, Is.EqualTo("settlement"));
             Assert.That(city.IsHabitable, Is.True);
         }
 
         [Test]
-        public void GivenAProvinceSetupFileWithSeveralCities_WhenLoadingCities_ThenEveryCityIsLoaded()
+        public void GivenAProvinceWithFractionalCivilizationValue_WhenLoadingCities_ThenTheValueIsTruncated()
         {
+            WriteProvinceDefinitions((1, "Newport"));
             gameDirectory.WriteFile(
-                "game/common/province_setup.csv",
-                CityHeader +
-                "2,greek,hellenic,wine,4,8,16,32,8,16,Cornova,2\n" +
-                "3,latin,roman_pantheon,olives,4,8,16,32,8,16,Solara,3\n");
+                "game/setup/provinces/00_latin_region.txt",
+                "1=\n{\n\tcivilization_value=18.5\n\tculture=\"roman\"\n\tprovince_rank=\"city\"\n\treligion=\"roman_pantheon\"\n\ttrade_goods=\"grain\"\n}\n");
+
+            List<City> cities = [.. entitiesLoader.LoadCities()];
+
+            Assert.That(cities[0].CivilizationLevel, Is.EqualTo(18));
+        }
+
+        [Test]
+        public void GivenAProvinceWithSeveralPopBlocks_WhenLoadingCities_ThenPopulationsOfTheSameTypeAreSummed()
+        {
+            WriteProvinceDefinitions((1, "Newport"));
+            gameDirectory.WriteFile(
+                "game/setup/provinces/00_latin_region.txt",
+                "1=\n{\n\tcivilization_value=1\n\tculture=\"roman\"\n\tprovince_rank=\"city\"\n\treligion=\"roman_pantheon\"\n\ttrade_goods=\"grain\"\n" +
+                "\tcitizen=\n\t{\n\t\tamount=4\n\t}\n" +
+                "\tcitizen=\n\t{\n\t\tculture=\"hebrew\"\n\t\tamount=20\n\t}\n}\n");
+
+            List<City> cities = [.. entitiesLoader.LoadCities()];
+
+            Assert.That(cities[0].CitizensCount, Is.EqualTo(24));
+        }
+
+        [Test]
+        public void GivenAProvinceFileWithSeveralProvinces_WhenLoadingCities_ThenEveryHabitableProvinceIsLoaded()
+        {
+            WriteProvinceDefinitions((1, "Newport"), (2, "Cornova"), (3, "Solara"));
+            gameDirectory.WriteFile(
+                "game/setup/provinces/00_latin_region.txt",
+                BuildProvinceBlock("1", "roman", "city") +
+                BuildProvinceBlock("2", "greek", "settlement") +
+                BuildProvinceBlock("3", "latin", "settlement"));
 
             List<City> cities = [.. entitiesLoader.LoadCities()];
 
@@ -75,12 +98,13 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
         }
 
         [Test]
-        public void GivenAProvinceSetupFileWithCommentedLines_WhenLoadingCities_ThenTheCommentsAreSkipped()
+        public void GivenAProvinceWithoutAProvinceRank_WhenLoadingCities_ThenItIsNotLoaded()
         {
+            WriteProvinceDefinitions((1, "Newport"), (2, "Bargylus Mons"));
             gameDirectory.WriteFile(
-                "game/common/province_setup.csv",
-                "#ProvID;Culture;Religion;TradeGoods;Citizens;Freedmen;Slaves;Tribesmen;Civilization;Barbarian;NameRef;AraRef\n" +
-                CityHeader);
+                "game/setup/provinces/00_latin_region.txt",
+                BuildProvinceBlock("1", "roman", "settlement") +
+                "2=\n{\n\tcivilization_value=0\n\tculture=\"roman\"\n\tprovince_rank=\"\"\n\treligion=\"roman_pantheon\"\n\ttrade_goods=\"\"\n}\n");
 
             List<City> cities = [.. entitiesLoader.LoadCities()];
 
@@ -89,21 +113,42 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
         }
 
         [Test]
-        public void GivenNoProvinceSetupFile_WhenLoadingCities_ThenNothingIsLoaded()
+        public void GivenAProvinceWithoutADefinitionName_WhenLoadingCities_ThenItIsNotLoaded()
+        {
+            WriteProvinceDefinitions((1, "Newport"), (2, null));
+            gameDirectory.WriteFile(
+                "game/setup/provinces/00_latin_region.txt",
+                BuildProvinceBlock("1", "roman", "settlement") +
+                BuildProvinceBlock("2", "roman", "settlement"));
+
+            List<City> cities = [.. entitiesLoader.LoadCities()];
+
+            Assert.That(cities, Has.Count.EqualTo(1));
+            Assert.That(cities[0].Id, Is.EqualTo("1"));
+        }
+
+        [Test]
+        public void GivenAProvinceWithNonRandomisedAttributes_WhenLoadingCities_ThenTheyArePreserved()
+        {
+            WriteProvinceDefinitions((1, "Newport"));
+            gameDirectory.WriteFile(
+                "game/setup/provinces/00_latin_region.txt",
+                "1=\n{\n\tcivilization_value=1\n\tculture=\"roman\"\n\tholy_site=\"omen_jupiter\"\n\tport_building=2\n\tprovince_rank=\"city\"\n\treligion=\"roman_pantheon\"\n\tterrain=\"farmland\"\n\ttrade_goods=\"grain\"\n}\n");
+
+            List<City> cities = [.. entitiesLoader.LoadCities()];
+
+            Assert.That(cities[0].PreservedLines, Does.Contain("\tholy_site=\"omen_jupiter\""));
+            Assert.That(cities[0].PreservedLines, Does.Contain("\tport_building=2"));
+            Assert.That(cities[0].PreservedLines, Does.Contain("\tterrain=\"farmland\""));
+            Assert.That(cities[0].PreservedLines, Does.Not.Contain("\tculture=\"roman\""));
+        }
+
+        [Test]
+        public void GivenNoProvincesDirectory_WhenLoadingCities_ThenNothingIsLoaded()
         {
             List<City> cities = [.. entitiesLoader.LoadCities()];
 
             Assert.That(cities, Is.Empty);
-        }
-
-        [Test]
-        public void GivenAMalformedProvinceSetupFile_WhenLoadingCities_ThenTheLoadingFails()
-        {
-            gameDirectory.WriteFile("game/common/province_setup.csv", "1,roman\n");
-
-            Assert.That(
-                () => entitiesLoader.LoadCities(),
-                Throws.TypeOf<SerializationException>());
         }
 
         [Test]
@@ -113,41 +158,26 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
                 Throws.TypeOf<DirectoryNotFoundException>());
 
         [Test]
-        public void GivenACulturesDirectory_WhenLoadingCultureIds_ThenOnlyEmptyCultureDefinitionsAreLoaded()
+        public void GivenACulturesDirectory_WhenLoadingCultureIds_ThenOnlySubculturesAreLoaded()
         {
             gameDirectory.WriteFile(
                 "game/common/cultures/00_latin.txt",
-                "latin = {\n" +
-                "\t\tmunicipal = {}\n" +
-                "\t\tbritannic = {} #deprecated\n" +
-                "\tnon_empty = { color = hsv { 0 0.91 0.55 } }\n" +
-                "}\n");
+                "latin = {\n\tmale_names = {\n\t\tAppius\n\t}\n\tculture = {\n\t\troman = { levy_template = levy_roman }\n\t\tvenetic = {}\n\t\tetruscan = {\n\t\t\tlevy_template = levy_etruscan\n\t\t}\n\t}\n}\n");
 
             List<string> cultureIds = [.. entitiesLoader.LoadCultureIds()];
 
-            Assert.That(cultureIds, Is.EqualTo(["municipal", "britannic"]));
+            Assert.That(cultureIds, Is.EqualTo(["roman", "venetic", "etruscan"]));
         }
 
         [Test]
         public void GivenSeveralCultureFiles_WhenLoadingCultureIds_ThenEveryFileIsRead()
         {
-            gameDirectory.WriteFile("game/common/cultures/00_latin.txt", "\t\tlatin = {}\n");
-            gameDirectory.WriteFile("game/common/cultures/00_greek.txt", "\t\tgreek = {}\n");
+            gameDirectory.WriteFile("game/common/cultures/00_latin.txt", "latin = {\n\tculture = {\n\t\tlatin = {}\n\t}\n}\n");
+            gameDirectory.WriteFile("game/common/cultures/00_greek.txt", "greek = {\n\tculture = {\n\t\tgreek = {}\n\t}\n}\n");
 
             List<string> cultureIds = [.. entitiesLoader.LoadCultureIds()];
 
             Assert.That(cultureIds, Is.EquivalentTo(["latin", "greek"]));
-        }
-
-        [Test]
-        public void GivenACulturesDirectoryWithNonTextFiles_WhenLoadingCultureIds_ThenOnlyTextFilesAreRead()
-        {
-            gameDirectory.WriteFile("game/common/cultures/00_latin.txt", "\t\tlatin = {}\n");
-            gameDirectory.WriteFile("game/common/cultures/notes.md", "\t\tignored = {}\n");
-
-            List<string> cultureIds = [.. entitiesLoader.LoadCultureIds()];
-
-            Assert.That(cultureIds, Is.EqualTo(["latin"]));
         }
 
         [Test]
@@ -161,27 +191,11 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
         {
             gameDirectory.WriteFile(
                 "game/common/governments/00_default.txt",
-                "#Republics\n" +
-                "aristocratic_republic = { #military party\n" +
-                "\t\ttype = republic\n" +
-                "}\n" +
-                "monarchy = {\n" +
-                "}\n");
+                "#Republics\naristocratic_republic = { #military party\n\t\ttype = republic\n}\nmonarchy = {\n}\n");
 
             List<string> governmentIds = [.. entitiesLoader.LoadGovernmentIds()];
 
             Assert.That(governmentIds, Is.EqualTo(["aristocratic_republic", "monarchy"]));
-        }
-
-        [Test]
-        public void GivenSeveralGovernmentFiles_WhenLoadingGovernmentIds_ThenEveryFileIsRead()
-        {
-            gameDirectory.WriteFile("game/common/governments/00_default.txt", "republic = {\n}\n");
-            gameDirectory.WriteFile("game/common/governments/01_extra.txt", "tribal = {\n}\n");
-
-            List<string> governmentIds = [.. entitiesLoader.LoadGovernmentIds()];
-
-            Assert.That(governmentIds, Is.EquivalentTo(["republic", "tribal"]));
         }
 
         [Test]
@@ -195,12 +209,7 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
         {
             gameDirectory.WriteFile(
                 "game/common/diplomatic_stances/00_default.txt",
-                "neutral_stance = {\n" +
-                "\t\tmodifier = {\n" +
-                "\t\t}\n" +
-                "}\n" +
-                "appeasement_stance = {\n" +
-                "}\n");
+                "neutral_stance = {\n\t\tmodifier = {\n\t\t}\n}\nappeasement_stance = {\n}\n");
 
             List<string> diplomaticStanceIds = [.. entitiesLoader.LoadDiplomaticStanceIds()];
 
@@ -222,11 +231,7 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
         {
             gameDirectory.WriteFile(
                 "game/common/religions/00_default.txt",
-                "roman_pantheon = { # Hellenic\n" +
-                "\t\tmodifier = { global_citizen_happyness = happiness_large_svalue }\n" +
-                "}\n" +
-                "egyptian_pantheon = {\n" +
-                "}\n");
+                "roman_pantheon = { # Hellenic\n\t\tmodifier = { global_citizen_happyness = happiness_large_svalue }\n}\negyptian_pantheon = {\n}\n");
 
             List<string> religionIds = [.. entitiesLoader.LoadReligionIds()];
 
@@ -234,9 +239,9 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
         }
 
         [Test]
-        public void GivenNoSetupFile_WhenLoadingCountries_ThenTheLoadingFails()
+        public void GivenNoCountriesIndexFile_WhenLoadingCountries_ThenTheLoadingFails()
         {
-            gameDirectory.CreateDirectory("game/common");
+            gameDirectory.CreateDirectory("game/setup/countries");
 
             Assert.That(
                 () => entitiesLoader.LoadCountries(),
@@ -244,21 +249,10 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
         }
 
         [Test]
-        public void GivenNoGameDirectory_WhenLoadingCountries_ThenTheLoadingFails()
-            => Assert.That(
-                () => entitiesLoader.LoadCountries(),
-                Throws.TypeOf<DirectoryNotFoundException>());
-
-        [Test]
-        public void GivenNoGameDirectory_WhenLoadingReligionIds_ThenTheLoadingFails()
-            => Assert.That(
-                () => entitiesLoader.LoadReligionIds(),
-                Throws.TypeOf<DirectoryNotFoundException>());
-
-        [Test]
-        public void GivenASetupFileWithoutCapitalDefinitions_WhenLoadingCountries_ThenNothingIsLoaded()
+        public void GivenASetupFileWithoutCountryBlocks_WhenLoadingCountries_ThenNothingIsLoaded()
         {
-            gameDirectory.WriteFile("game/common/setup.txt", "countries = {\n}\n");
+            gameDirectory.WriteFile("game/setup/countries/countries.txt", "REB = \"setup/countries/rebels.txt\"\n");
+            gameDirectory.WriteFile("game/setup/main/00_default.txt", "country = {\n\tcountries = {\n\t}\n}\n");
 
             List<Country> countries = [.. entitiesLoader.LoadCountries()];
 
@@ -283,6 +277,7 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
             Assert.That(country.CultureId, Is.EqualTo("latin"));
             Assert.That(country.ReligionId, Is.EqualTo("roman_pantheon"));
             Assert.That(country.CapitalId, Is.EqualTo("1"));
+            Assert.That(country.DefinitionFilePath, Is.EqualTo("setup/countries/italia/rome.txt"));
             Assert.That(country.IsVanilla, Is.True);
         }
 
@@ -299,100 +294,126 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
         }
 
         [Test]
-        public void GivenAVanillaCountryWithACentralisationValue_WhenLoadingCountries_ThenTheCentralisationLevelIsLeftUnset()
+        public void GivenAVanillaCountryWithACentralisationValue_WhenLoadingCountries_ThenTheCentralisationLevelIsLoaded()
         {
             WriteVanillaCountryFiles();
 
             List<Country> countries = [.. entitiesLoader.LoadCountries()];
 
-            Assert.That(countries[0].CentralisationLevel, Is.EqualTo(-1));
+            Assert.That(countries[0].CentralisationLevel, Is.EqualTo(42));
         }
 
         [Test]
-        public void GivenSeveralVanillaCountries_WhenLoadingCountries_ThenEveryCountryIsLoaded()
+        public void GivenAVanillaCountryWithAnInlineCommentOnTheCapital_WhenLoadingCountries_ThenTheCommentIsNotPartOfTheCapitalId()
         {
             WriteVanillaCountryFiles();
             gameDirectory.WriteFile(
-                "game/common/setup.txt",
-                BuildSetupFile(
-                    ("ROM", "aristocratic_republic", "neutral_stance", "latin", "roman_pantheon", "1"),
-                    ("CAR", "monarchy", "appeasement_stance", "greek", "egyptian_pantheon", "2")));
-            gameDirectory.WriteFile(
-                "game/localization/english/countries_l_english.yml",
-                "l_english:\n ROM:0 \"Rome\"\n CAR:0 \"Carthage\"\n");
-            gameDirectory.WriteFile(
-                "game/common/countries.txt",
-                "ROM = \"countries/italia/rome.txt\"\n" +
-                "CAR = \"countries/africa/carthage.txt\"\n");
-            gameDirectory.WriteFile("game/common/countries/italia/rome.txt", "color = rgb { 143  141  128 }\n");
-            gameDirectory.WriteFile("game/common/countries/africa/carthage.txt", "color = rgb { 4  8  16 }\n");
+                "game/setup/main/00_default.txt",
+                "country = {\n" +
+                "\tcountries = {\n" +
+                "\t\tROM = {\n" +
+                "\t\t\tgovernment = aristocratic_republic\n" +
+                "\t\t\tcapital = 1 #Roma\n" +
+                "\t\t}\n" +
+                "\t}\n" +
+                "}\n");
 
             List<Country> countries = [.. entitiesLoader.LoadCountries()];
 
-            Assert.That(countries, Has.Count.EqualTo(2));
+            Assert.That(countries[0].CapitalId, Is.EqualTo("1"));
+        }
+
+        [Test]
+        public void GivenAVanillaCountry_WhenLoadingCountries_ThenNonManagedBlockLinesArePreserved()
+        {
+            WriteVanillaCountryFiles();
+
+            List<Country> countries = [.. entitiesLoader.LoadCountries()];
+
+            Assert.That(countries[0].PreservedLines, Does.Contain("\t\t\tfamily = 0"));
+            Assert.That(countries[0].PreservedLines, Does.Contain("\t\t\tis_antagonist = yes"));
+            Assert.That(countries[0].PreservedLines, Does.Not.Contain("\t\t\town_control_core = { 1 2 3 }"));
+        }
+
+        [Test]
+        public void GivenAVanillaCountryWithoutACapital_WhenLoadingCountries_ThenItIsLoadedWithoutACapital()
+        {
+            gameDirectory.WriteFile("game/setup/countries/countries.txt", "ROM = \"setup/countries/italia/rome.txt\"\n");
+            gameDirectory.WriteFile("game/setup/countries/italia/rome.txt", "color = rgb { 143  141  128 }\n");
+            gameDirectory.WriteFile(
+                "game/setup/main/00_default.txt",
+                "country = {\n\tcountries = {\n\t\tROM = {\n\t\t\tgovernment = aristocratic_republic\n\t\t}\n\t}\n}\n");
+
+            List<Country> countries = [.. entitiesLoader.LoadCountries()];
+
+            Assert.That(countries, Has.Count.EqualTo(1));
             Assert.That(countries[0].Id, Is.EqualTo("ROM"));
-            Assert.That(countries[0].Name, Is.EqualTo("Rome"));
-            Assert.That(countries[0].ColourRed, Is.EqualTo(143));
-            Assert.That(countries[1].Id, Is.EqualTo("CAR"));
-            Assert.That(countries[1].Name, Is.EqualTo("Carthage"));
-            Assert.That(countries[1].ColourBlue, Is.EqualTo(16));
+            Assert.That(countries[0].CapitalId, Is.Empty);
         }
 
         [Test]
-        public void GivenAVanillaCountryWithoutALocalisedName_WhenLoadingCountries_ThenTheNameIsNotSet()
+        public void GivenAProvinceDefinitionFile_WhenLoadingCities_ThenTheProvinceNamesAreReadFromTheCsv()
         {
-            WriteVanillaCountryFiles();
-            gameDirectory.WriteFile("game/localization/english/countries_l_english.yml", "l_english:\n");
+            gameDirectory.WriteFile(
+                "game/map_data/definition.csv",
+                "#Province id 0 is ignored, hard coded.\n0;0;0;0;;x;;;;;;;;;;;;;;;;;;;,\n1;42;3;128;Roma;x;;;;;;;;;;;;;;;;;;;,\n");
+            gameDirectory.WriteFile("game/setup/provinces/00_latin_region.txt", BuildProvinceBlock("1", "roman", "city"));
 
-            List<Country> countries = [.. entitiesLoader.LoadCountries()];
+            List<City> cities = [.. entitiesLoader.LoadCities()];
 
-            Assert.That(countries[0].Name, Is.Null);
+            Assert.That(cities, Has.Count.EqualTo(1));
+            Assert.That(cities[0].NameId, Is.EqualTo("Roma"));
         }
 
-        [Test]
-        public void GivenAVanillaCountryMissingFromTheIndex_WhenLoadingCountries_ThenTheColourIsNotSet()
+        private void WriteProvinceDefinitions(params (int Id, string Name)[] provinces)
         {
-            WriteVanillaCountryFiles();
-            gameDirectory.WriteFile("game/common/countries.txt", "CAR = \"countries/africa/carthage.txt\"\n");
+            string content = "#Province id 0 is ignored, hard coded.\n0;0;0;0;;x;;;;;;;;;;;;;;;;;;;,\n";
 
-            List<Country> countries = [.. entitiesLoader.LoadCountries()];
+            foreach ((int id, string name) in provinces)
+            {
+                content += $"{id};42;3;128;{name};x;;;;;;;;;;;;;;;;;;;,\n";
+            }
 
-            Assert.That(countries[0].ColourRed, Is.EqualTo(0));
-            Assert.That(countries[0].ColourGreen, Is.EqualTo(0));
-            Assert.That(countries[0].ColourBlue, Is.EqualTo(0));
+            gameDirectory.WriteFile("game/map_data/definition.csv", content);
         }
+
+        private static string BuildProvinceBlock(string provinceId, string cultureId, string provinceRank)
+            => $"{provinceId}=\n" +
+               "{\n" +
+               "\tbarbarian_power=0\n" +
+               "\tcivilization_value=8\n" +
+               $"\tculture=\"{cultureId}\"\n" +
+               $"\tprovince_rank=\"{provinceRank}\"\n" +
+               "\treligion=\"roman_pantheon\"\n" +
+               "\ttrade_goods=\"grain\"\n" +
+               "\tcitizen=\n" +
+               "\t{\n" +
+               "\t\tamount=4\n" +
+               "\t}\n" +
+               "}\n";
 
         private void WriteVanillaCountryFiles()
         {
+            gameDirectory.WriteFile("game/setup/countries/countries.txt", "ROM = \"setup/countries/italia/rome.txt\"\n");
+            gameDirectory.WriteFile("game/setup/countries/italia/rome.txt", "color = rgb { 143  141  128 }\n");
+            gameDirectory.WriteFile("game/localization/english/countries_l_english.yml", "l_english:\n ROM:0 \"Rome\"\n");
             gameDirectory.WriteFile(
-                "game/common/setup.txt",
-                BuildSetupFile(("ROM", "aristocratic_republic", "neutral_stance", "latin", "roman_pantheon", "1")));
-            gameDirectory.WriteFile(
-                "game/localization/english/countries_l_english.yml",
-                "l_english:\n ROM:0 \"Rome\"\n");
-            gameDirectory.WriteFile("game/common/countries.txt", "ROM = \"countries/italia/rome.txt\"\n");
-            gameDirectory.WriteFile("game/common/countries/italia/rome.txt", "color = rgb { 143  141  128 }\n");
-        }
-
-        private static string BuildSetupFile(
-            params (string Id, string GovernmentId, string DiplomaticStanceId, string CultureId, string ReligionId, string CapitalId)[] countries)
-        {
-            string content = "countries = {\n";
-
-            foreach ((string id, string governmentId, string diplomaticStanceId, string cultureId, string religionId, string capitalId) in countries)
-            {
-                content +=
-                    $"\t\t{id} = {{\n" +
-                    $"\t\t\tgovernment = {governmentId}\n" +
-                    $"\t\t\tdiplomatic_stance = {diplomaticStanceId}\n" +
-                    $"\t\t\tprimary_culture = {cultureId}\n" +
-                    $"\t\t\treligion = {religionId}\n" +
-                    $"\t\t\tcentralization = 42\n" +
-                    $"\t\t\tcapital = {capitalId}\n" +
-                    "\t\t}\n";
-            }
-
-            return content + "}\n";
+                "game/setup/main/00_default.txt",
+                "country = {\n" +
+                "\tcountries = {\n" +
+                "\t\tROM = {\n" +
+                "\t\t\tfamily = 0\n" +
+                "\t\t\tgovernment = aristocratic_republic\n" +
+                "\t\t\tdiplomatic_stance = neutral_stance\n" +
+                "\t\t\tprimary_culture = latin\n" +
+                "\t\t\treligion = roman_pantheon\n" +
+                "\t\t\tcentralization = 42\n" +
+                "\t\t\tcapital = 1\n" +
+                "\t\t\tis_antagonist = yes\n" +
+                "\t\t\town_control_core = { 1 2 3 }\n" +
+                "\t\t}\n" +
+                "\t}\n" +
+                "}\n");
         }
     }
 }

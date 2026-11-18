@@ -3,15 +3,10 @@ using System.Collections.Generic;
 
 namespace ImperatorShatteredWorldGenerator.UnitTests
 {
-    internal sealed class SequenceRandom : Random
+    internal sealed class SequenceRandom(params int[] values) : Random
     {
-        private readonly IReadOnlyList<int> values;
+        private readonly IReadOnlyList<int> values = values;
         private int position;
-
-        public SequenceRandom(params int[] values)
-        {
-            this.values = values;
-        }
 
         public override int Next(int maximumValue)
         {

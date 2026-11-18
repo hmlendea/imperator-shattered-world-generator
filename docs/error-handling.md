@@ -12,9 +12,7 @@ The rationale is recorded in [Design Decisions](./design-decisions.md#d12--no-er
 |-----------|-----------|---------------|
 | `ArgumentException` | `Program.GetRequiredArgumentValue` | `--dir` or `--name` absent or blank |
 | `FormatException` | `Program.GetIntegerArgumentValue` (`int.Parse`) | Non-numeric value for a numeric option |
-| `FormatException` | `CityMapping.ToServiceModel` (`int.Parse`) | Non-numeric `Civilization`/`Barbarian` column in `province_setup.csv`, or an empty `rgb` capture in a country file |
-| `SerializationException` | `CsvRepository<CityEntity>` | Malformed CSV row |
-| `FileNotFoundException` | `File.ReadAllLines`/`ReadAllText`/`new CsvRepository` | Missing `setup.txt`, `countries.txt`, a referenced country file, or `religions/00_default.txt` |
+| `FileNotFoundException` | `File.ReadAllLines`/`ReadAllText`/`CsvFile.LoadEntities` | Missing `setup/main/00_default.txt`, `setup/countries/countries.txt`, or `religions/00_default.txt` |
 | `DirectoryNotFoundException` | `DirectoryInfo.GetFiles`/`File.ReadAllLines` | Missing game root, `cultures`, `governments`, or `diplomatic_stances` |
 | `NullReferenceException` | `EntityManager.UpdateCity`/`AddCountry` | Mutation before any read |
 | `NullReferenceException` | `CityGenerator`, `CountryGenerator` | Unknown city identifier producing `null` from `GetCity` |
@@ -30,7 +28,7 @@ The rationale is recorded in [Design Decisions](./design-decisions.md#d12--no-er
 | Stage | Failure | Disk state |
 |-------|---------|------------|
 | Argument parsing | Missing mandatory, non-numeric | Untouched |
-| City loading | Missing or malformed CSV | Untouched |
+| City loading | Missing province data or definition CSV | Untouched |
 | City randomisation | Empty culture/religion, degenerate range | Untouched |
 | Country generation | Pool exhausted, empty government/stance list | Untouched (writer not reached) |
 | Capital regeneration | Unknown capital identifier | Untouched |
@@ -41,10 +39,10 @@ The rationale is recorded in [Design Decisions](./design-decisions.md#d12--no-er
 
 | Situation | Behaviour | Rationale |
 |-----------|-----------|-----------|
-| Missing `province_setup.csv` | Empty city collection, no exception | Treated as an empty world; the writer emits a header-only CSV |
-| No `rgb` block in a country file | Colour stays `0 0 0` when the index line is absent; if the index line exists but the block is missing, `int.Parse` on an empty capture throws `FormatException` | Follows `Regex` group values verbatim |
-| No localised country name | `Name` stays `null`; `setup.txt` shows an empty comment | Vanilla-only concern; the game reads localisation itself |
-| Vanilla `centralization` present | Level stays `-1`, so the line is omitted from the generated `setup.txt` | Current behaviour; see ambiguities |
+| Missing `setup/provinces` or `map_data/definition.csv` | Empty city collection, no exception | Treated as an empty world; the writer emits a province file with only the header comment |
+| No `rgb` block in a country file | Colour stays `0 0 0` | Follows `Regex` group values verbatim |
+| No localised country name | `Name` stays `null`; the setup file shows an empty comment | Vanilla-only concern; the game reads localisation itself |
+| Country block without a capital | The country is skipped | A country without a capital cannot be generated |
 | Unknown city or country identifier requested | `null` from `EntityManager` | Lets callers detect absence without exceptions |
 
 ## Recovery

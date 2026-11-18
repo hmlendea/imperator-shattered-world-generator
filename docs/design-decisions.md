@@ -33,7 +33,7 @@ Each decision records the choice, the evidence, the rationale, and the consequen
 ## D5 — Countries preserved, cities rewritten
 
 **Choice:** Never remove a vanilla country.
-**Evidence:** `LoadCountries` sets `IsVanilla = true`; `ModWriter.WriteSetupFile` emits a comment stating removal could break the game.
+**Evidence:** `LoadCountries` sets `IsVanilla = true`; `ModWriter.WriteCountrySetupFile` emits a comment stating removal could break the game.
 **Rationale:** Vanilla events reference the tags and fail once enough in-game years pass.
 **Consequence:** The mod cannot produce a world without the vanilla powers; not configurable.
 
