@@ -8,31 +8,14 @@ using ImperatorShatteredWorldGenerator.Service.Models;
 
 namespace ImperatorShatteredWorldGenerator.Service
 {
-    public sealed class ShatteredWorldGenerator : IShatteredWorldGenerator
+    public sealed class ShatteredWorldGenerator(
+        IEntityManager entityManager,
+        ICityGenerator cityGenerator,
+        ICountryGenerator countryGenerator,
+        IModWriter modWriter,
+        IRandomNumberGenerator rng,
+        GeneratorSettings settings) : IShatteredWorldGenerator
     {
-        readonly IEntityManager entityManager;
-        readonly ICityGenerator cityGenerator;
-        readonly ICountryGenerator countryGenerator;
-        readonly IModWriter modWriter;
-        readonly IRandomNumberGenerator rng;
-        readonly GeneratorSettings settings;
-
-        public ShatteredWorldGenerator(
-            IEntityManager entityManager,
-            ICityGenerator cityGenerator,
-            ICountryGenerator countryGenerator,
-            IModWriter modWriter,
-            IRandomNumberGenerator rng,
-            GeneratorSettings settings)
-        {
-            this.entityManager = entityManager;
-            this.cityGenerator = cityGenerator;
-            this.countryGenerator = countryGenerator;
-            this.modWriter = modWriter;
-            this.rng = rng;
-            this.settings = settings;
-        }
-
         public void Generate()
         {
             GenerateCities();

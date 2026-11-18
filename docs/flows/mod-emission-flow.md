@@ -14,7 +14,7 @@ sequenceDiagram
 
     W->>FS: delete out/<mod-id>/ if exists
     W->>FS: delete out/<mod-id>.mod if exists
-    W->>FS: create directories: setup/provinces, setup/countries, setup/main, common/defines, events, localization/english
+    W->>FS: create directories: setup/provinces, setup/countries, setup/main, events, localization/english
     W->>FS: write out/<mod-id>.mod and out/<mod-id>/descriptor.mod
     W->>M: GetCities()
     W->>FS: write setup/provinces/02_shattered_world.txt (BOM)
@@ -22,9 +22,9 @@ sequenceDiagram
     W->>FS: write setup/countries/<id>.txt per generated country (BOM)
     W->>FS: write setup/countries/countries.txt (BOM)
     W->>FS: write localization/english/SW_countries_l_english.yml (BOM, non-vanilla only)
-    W->>FS: write setup/main/02_shattered_world_countries.txt (BOM)
-    W->>FS: write events/flavor_sel.txt (BOM)
-    W->>FS: write common/defines/00_defines.txt (BOM)
+    W->>FS: write setup/main/00_default.txt (BOM)
+    W->>FS: write events/SW_events.txt (BOM)
+    W->>FS: write localization/english/SW_events_l_english.yml (BOM)
 ```
 
 ## Step details
@@ -34,7 +34,7 @@ sequenceDiagram
 ```text
 Directory.Delete(settings.ModDirectoryPath, true) if exists
 File.Delete(settings.ModFilePath) if exists
-Directory.CreateDirectory(...) for setup/provinces, setup/countries, setup/main, common/defines, events, localization/english
+Directory.CreateDirectory(...) for setup/provinces, setup/countries, setup/main, events, localization/english
 ```
 
 The deletion is recursive and unprompted; `ModWriterTests` confirms that stale files inside the directory are removed and that the `.mod` file is discarded.
@@ -105,7 +105,7 @@ Only countries where `!country.IsVanilla` are written. For vanilla countries, th
 
 ### 7. `WriteCountrySetupFile`
 
-Writes `out/<mod-id>/setup/main/02_shattered_world_countries.txt`. Each country produces a block:
+Writes `out/<mod-id>/setup/main/00_default.txt`. Each country produces a block:
 
 ```text
 		<Id> = { # <Name>
@@ -126,11 +126,15 @@ Vanilla countries include the two compatibility comment lines and their preserve
 
 ### 8. `WriteEventsFile`
 
-Writes `out/<mod-id>/events/flavor_sel.txt` containing the `grinsel.2` province event that grants five slave pops upon trigger.
+Writes `out/<mod-id>/events/SW_events.txt` containing the `grinsel.2` country event that grants five slave pops upon trigger. The file name is deliberately distinct from the vanilla `events/flavor_sel.txt`, because identically named files override the vanilla file wholesale.
 
-### 9. `WriteDefinesFile`
+### 9. `WriteEventsLocalisationFile`
 
-Writes `out/<mod-id>/common/defines/00_defines.txt` setting `NGame.START_DATE = "450.10.1"`, matching the current game baseline.
+Writes `out/<mod-id>/localization/english/SW_events_l_english.yml` with the title, description, and both option names of `grinsel.2`, so the event carries no missing localisation keys.
+
+### 10. `WriteDefinesFile` (removed)
+
+No defines file is written. Redefining the `NGame` table with only `START_DATE` replaces the whole table, unsetting `TAG_LIMIT` and triggering `Assertion failed: TagID < NDefines::NGame::TAG_LIMIT`; the vanilla `START_DATE` is already `450.10.1`, so the file was a no-op.
 
 ## Encoding split
 
@@ -139,7 +143,8 @@ Two writer helpers govern encoding:
 | Helper | Encoding | Used for |
 |--------|----------|----------|
 | `WriteFile` | UTF-8 without BOM (`File.WriteAllText`) | `.mod`, `descriptor.mod` |
-| `WriteUnicodeFile` | UTF-8 **with** BOM (`new StreamWriter(path, false, Encoding.UTF8)`) | `setup/provinces`, country files, `countries.txt`, `setup/main`, `SW_countries_l_english.yml`, `flavor_sel.txt`, `00_defines.txt` |
+| `WriteUnicodeFile` | UTF-8 **with** BOM (`new StreamWriter(path, false, Encoding.UTF8)`) | `setup/provinces`, country files, `countries.txt`, `SW_countries_l_english.yml`, `SW_events_l_english.yml`, `SW_events.txt` |
+| `WriteUnicodeFileWithoutBom` | UTF-8 **without** BOM (`new UTF8Encoding(false)`) | `setup/main/00_default.txt` |
 
 The BOM is required by the game's text parsers for files containing non-ASCII identifiers; `ModWriterTests.GivenACreatingModRequest_WhenCreatingTheMod_ThenEveryUnicodeFileStartsWithAByteOrderMark` verifies byte-for-byte that the first three bytes are `0xEF 0xBB 0xBF`.
 

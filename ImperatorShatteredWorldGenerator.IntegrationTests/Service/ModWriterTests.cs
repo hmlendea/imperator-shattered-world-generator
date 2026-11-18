@@ -47,7 +47,6 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
             Assert.That(workingDirectory.DirectoryExists("out/shattered-world/setup/provinces"), Is.True);
             Assert.That(workingDirectory.DirectoryExists("out/shattered-world/setup/countries"), Is.True);
             Assert.That(workingDirectory.DirectoryExists("out/shattered-world/setup/main"), Is.True);
-            Assert.That(workingDirectory.DirectoryExists("out/shattered-world/common/defines"), Is.True);
             Assert.That(workingDirectory.DirectoryExists("out/shattered-world/events"), Is.True);
             Assert.That(workingDirectory.DirectoryExists("out/shattered-world/localization/english"), Is.True);
         }
@@ -202,6 +201,27 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
         }
 
         [Test]
+        public void GivenAVanillaCountryWithAReservedId_WhenCreatingTheMod_ThenTheDefinitionIndexDoesNotRepeatIt()
+        {
+            Country barbarians = BuildCountry("BAR", "Barbarians");
+            barbarians.IsVanilla = true;
+            barbarians.DefinitionFilePath = "setup/countries/barbarians.txt";
+            entityManager.Setup(manager => manager.GetCities()).Returns([]);
+            entityManager.Setup(manager => manager.GetCountries()).Returns([barbarians]);
+            string expectedContent =
+                $"REB = \"setup/countries/rebels.txt\"{Environment.NewLine}" +
+                $"PIR = \"setup/countries/pirates.txt\"{Environment.NewLine}" +
+                $"BAR = \"setup/countries/barbarians.txt\"{Environment.NewLine}" +
+                $"MER = \"setup/countries/mercenaries.txt\"{Environment.NewLine}";
+
+            modWriter.CreateMod();
+
+            Assert.That(
+                workingDirectory.ReadFile("out/shattered-world/setup/countries/countries.txt"),
+                Is.EqualTo(expectedContent));
+        }
+
+        [Test]
         public void GivenAGeneratedCountry_WhenCreatingTheMod_ThenItIsAddedToTheLocalisationFile()
         {
             Country country = BuildCountry("COR", "Cornova");
@@ -240,7 +260,7 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
 
             modWriter.CreateMod();
 
-            string content = workingDirectory.ReadFile("out/shattered-world/setup/main/02_shattered_world_countries.txt");
+            string content = workingDirectory.ReadFile("out/shattered-world/setup/main/00_default.txt");
 
             Assert.That(content, Does.Contain($"\t\tCOR = {{ # Cornova{Environment.NewLine}"));
             Assert.That(content, Does.Contain($"\t\t\tgovernment = aristocratic_republic{Environment.NewLine}"));
@@ -263,7 +283,7 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
             modWriter.CreateMod();
 
             Assert.That(
-                workingDirectory.ReadFile("out/shattered-world/setup/main/02_shattered_world_countries.txt"),
+                workingDirectory.ReadFile("out/shattered-world/setup/main/00_default.txt"),
                 Does.Contain("VANILLA COUNTRY - REQUIRED FOR COMPATIBILITY"));
         }
 
@@ -278,7 +298,7 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
 
             modWriter.CreateMod();
 
-            string content = workingDirectory.ReadFile("out/shattered-world/setup/main/02_shattered_world_countries.txt");
+            string content = workingDirectory.ReadFile("out/shattered-world/setup/main/00_default.txt");
 
             Assert.That(content, Does.Contain("\t\t\tfamily = 0"));
             Assert.That(content, Does.Contain("\t\t\tis_antagonist = yes"));
@@ -297,7 +317,7 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
             modWriter.CreateMod();
 
             Assert.That(
-                workingDirectory.ReadFile("out/shattered-world/setup/main/02_shattered_world_countries.txt"),
+                workingDirectory.ReadFile("out/shattered-world/setup/main/00_default.txt"),
                 Does.Not.Contain("centralization="));
         }
 
@@ -314,7 +334,7 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
             modWriter.CreateMod();
 
             Assert.That(
-                workingDirectory.ReadFile("out/shattered-world/setup/main/02_shattered_world_countries.txt"),
+                workingDirectory.ReadFile("out/shattered-world/setup/main/00_default.txt"),
                 Does.Contain($"\t\t\tcentralization={centralisationLevel}{Environment.NewLine}"));
         }
 
@@ -325,7 +345,7 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
 
             modWriter.CreateMod();
 
-            string content = workingDirectory.ReadFile("out/shattered-world/setup/main/02_shattered_world_countries.txt");
+            string content = workingDirectory.ReadFile("out/shattered-world/setup/main/00_default.txt");
 
             Assert.That(content, Does.Contain("country = {"));
             Assert.That(content, Does.Contain("\tcountries = {"));
@@ -338,10 +358,31 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
 
             modWriter.CreateMod();
 
-            string content = workingDirectory.ReadFile("out/shattered-world/events/flavor_sel.txt");
+            string content = workingDirectory.ReadFile("out/shattered-world/events/SW_events.txt");
 
             Assert.That(content, Does.Contain($"namespace = grinsel{Environment.NewLine}"));
             Assert.That(content, Does.Contain("create_pop = slaves"));
+        }
+
+        [Test]
+        public void GivenACreatingModRequest_WhenCreatingTheMod_ThenTheVanillaEventFileIsNotOverridden()
+        {
+            SetupEmptyWorld();
+
+            modWriter.CreateMod();
+
+            Assert.That(workingDirectory.FileExists("out/shattered-world/events/flavor_sel.txt"), Is.False);
+        }
+
+        [Test]
+        public void GivenACreatingModRequest_WhenCreatingTheMod_ThenTheVanillaDefinesTableIsNotReplaced()
+        {
+            SetupEmptyWorld();
+
+            modWriter.CreateMod();
+
+            Assert.That(workingDirectory.FileExists("out/shattered-world/common/defines/00_defines.txt"), Is.False);
+            Assert.That(workingDirectory.FileExists("out/shattered-world/common/defines/SW_defines.txt"), Is.False);
         }
 
         [Test]
@@ -351,22 +392,9 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
 
             modWriter.CreateMod();
 
-            string content = workingDirectory.ReadFile("out/shattered-world/events/flavor_sel.txt");
+            string content = workingDirectory.ReadFile("out/shattered-world/events/SW_events.txt");
 
             Assert.That(content.Split("create_pop = slaves"), Has.Length.EqualTo(6));
-        }
-
-        [Test]
-        public void GivenACreatingModRequest_WhenCreatingTheMod_ThenTheDefinesFileIsWritten()
-        {
-            SetupEmptyWorld();
-
-            modWriter.CreateMod();
-
-            string content = workingDirectory.ReadFile("out/shattered-world/common/defines/00_defines.txt");
-
-            Assert.That(content, Does.Contain("NGame = {"));
-            Assert.That(content, Does.Contain("START_DATE = \"450.10.1\""));
         }
 
         [Test]
@@ -378,8 +406,8 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
 
             Assert.That(HasByteOrderMark("out/shattered-world/setup/provinces/02_shattered_world.txt"), Is.True);
             Assert.That(HasByteOrderMark("out/shattered-world/setup/countries/countries.txt"), Is.True);
-            Assert.That(HasByteOrderMark("out/shattered-world/setup/main/02_shattered_world_countries.txt"), Is.True);
-            Assert.That(HasByteOrderMark("out/shattered-world/events/flavor_sel.txt"), Is.True);
+            Assert.That(HasByteOrderMark("out/shattered-world/setup/main/00_default.txt"), Is.False);
+            Assert.That(HasByteOrderMark("out/shattered-world/events/SW_events.txt"), Is.True);
             Assert.That(HasByteOrderMark("out/shattered-world/localization/english/SW_countries_l_english.yml"), Is.True);
         }
 

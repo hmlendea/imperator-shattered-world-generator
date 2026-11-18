@@ -23,11 +23,12 @@
 6. `WriteCountriesLocalisationFile()`
 7. `WriteCountrySetupFile()`
 8. `WriteEventsFile()`
-9. `WriteDefinesFile()`
+9. `WriteEventsLocalisationFile()`
+10. `WriteDefinesFile()`
 
 ### Directory preparation
 
-Creates `out/<mod-id>/setup/provinces`, `out/<mod-id>/setup/countries`, `out/<mod-id>/setup/main`, `out/<mod-id>/common/defines`, `out/<mod-id>/events`, and `out/<mod-id>/localization/english`. Before creating, it recursively deletes `out/<mod-id>` when present and deletes `out/<mod-id>.mod` when present. The delete-then-create order means a failure after deletion leaves no output at all.
+Creates `out/<mod-id>/setup/provinces`, `out/<mod-id>/setup/countries`, `out/<mod-id>/setup/main`, `out/<mod-id>/events`, and `out/<mod-id>/localization/english`. Before creating, it recursively deletes `out/<mod-id>` when present and deletes `out/<mod-id>.mod` when present. The delete-then-create order means a failure after deletion leaves no output at all.
 
 ### Files
 
@@ -39,9 +40,9 @@ Creates `out/<mod-id>/setup/provinces`, `out/<mod-id>/setup/countries`, `out/<mo
 | `out/<mod-id>/setup/countries/<Id>.txt` | `WriteCountryFiles` | `color = rgb { r g b }`, blank line, `ship_names = { ... }`, for generated countries | UTF-8 with BOM |
 | `out/<mod-id>/setup/countries/countries.txt` | `WriteCountriesDefinitionIndexFile` | Four fixed entries then one line per country | UTF-8 with BOM |
 | `out/<mod-id>/localization/english/SW_countries_l_english.yml` | `WriteCountriesLocalisationFile` | `l_english:` then ` Id:0 "Name"` for non-vanilla countries | UTF-8 with BOM |
-| `out/<mod-id>/setup/main/02_shattered_world_countries.txt` | `WriteCountrySetupFile` | `country = { countries = { ... } }` | UTF-8 with BOM |
-| `out/<mod-id>/events/flavor_sel.txt` | `WriteEventsFile` | A `grinsel.2` province event | UTF-8 with BOM |
-| `out/<mod-id>/common/defines/00_defines.txt` | `WriteDefinesFile` | `NGame = { START_DATE = "450.10.1" }` | UTF-8 with BOM |
+| `out/<mod-id>/setup/main/00_default.txt` | `WriteCountrySetupFile` | The vanilla `00_default.txt` with its `country = { countries = { ... } }` block replaced by the generated one | UTF-8 **without** BOM |
+| `out/<mod-id>/events/SW_events.txt` | `WriteEventsFile` | A `grinsel.2` country event | UTF-8 with BOM |
+| `out/<mod-id>/localization/english/SW_events_l_english.yml` | `WriteEventsLocalisationFile` | `l_english:` then the four `grinsel.2` keys | UTF-8 with BOM |
 
 ### Notes on individual writers
 
@@ -49,9 +50,10 @@ Creates `out/<mod-id>/setup/provinces`, `out/<mod-id>/setup/countries`, `out/<mo
 - **`WriteCountryFiles`** writes `ship_names` from `country.ShipNames` for generated countries only; vanilla country files already exist in the base game and their paths are reused in the index.
 - **`WriteCountriesDefinitionIndexFile`** always begins with `REB`, `PIR`, `BAR`, and `MER` pointing at the vanilla files, then appends every country in `GetCountries()` order.
 - **`WriteCountriesLocalisationFile`** filters `!c.IsVanilla`, so only generated countries are localised; vanilla names already exist in the base game.
-- **`WriteCountrySetupFile`** writes, per country: a comment with the name; for vanilla countries two compatibility comments; `government`; `diplomatic_stance` only when non-blank; `primary_culture`; `religion`; `centralization` only when `>= 0`; `capital`; the country's preserved lines; and `own_control_core = { <capital> }`.
-- **`WriteEventsFile`** emits `create_pop = slaves` five times using `NuciExtensions.Repeat`, tied to a `num_of_cities = 1` and `is_capital = yes` trigger.
-- **`WriteDefinesFile`** moves the start date to `450.10.1`.
+- **`WriteCountrySetupFile`** reads the vanilla `game/setup/main/00_default.txt`, drops its top-level `country` block (found with `ClausewitzText.FindBlockEnd`), and splices in the generated block, leaving `treasure_manager`, `family`, `diplomacy`, `provinces`, `road_network`, and `trade` untouched. A second top-level `country` key in a separate file is rejected by the game parser, which discards the whole file, and a byte-order mark before the first key turns that key into an unexpected token, so this file is written without a BOM. Per country it writes: a comment with the name; for vanilla countries two compatibility comments; `government`; `diplomatic_stance` only when non-blank; `primary_culture`; `religion`; `centralization` only when `>= 0`; `capital` and `own_control_core = { <capital> }` only when the country has a capital; and the country's preserved lines.
+- **`WriteEventsFile`** emits `create_pop = slaves` five times using `NuciExtensions.Repeat`, inside a `random_owned_province` scope, tied to a `num_of_cities = 1` trigger on a country event. The file is named `SW_events.txt` so that it loads alongside the vanilla `events/flavor_sel.txt` instead of replacing it.
+- **`WriteEventsLocalisationFile`** supplies the title, description, and both option names of `grinsel.2` in `SW_events_l_english.yml`.
+- No defines file is emitted. Redefining the `NGame` table with only `START_DATE` replaces it, unsetting `TAG_LIMIT` and aborting the game; the vanilla `START_DATE` is already `450.10.1`, so no define is needed.
 
 ### Newline normalisation
 

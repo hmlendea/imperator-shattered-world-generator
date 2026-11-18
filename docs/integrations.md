@@ -38,7 +38,7 @@ All parsing is tolerant of missing optional content but strict about missing fil
 | `out/<mod-id>/setup/provinces/02_shattered_world.txt` | Game province database | One randomised block per habitable province, keyed by province id |
 | `out/<mod-id>/setup/countries/<TAG>.txt` | Game country database | Colour and ship names for each generated country |
 | `out/<mod-id>/setup/countries/countries.txt` | Game country database | The fixed entries plus every vanilla and generated tag |
-| `out/<mod-id>/setup/main/02_shattered_world_countries.txt` | Game setup database | One `countries` block with every country's government, stance, culture, religion, centralisation, capital, and `own_control_core` |
+| `out/<mod-id>/setup/main/00_default.txt` | Game setup database | One `countries` block with every country's government, stance, culture, religion, centralisation, capital, and `own_control_core` |
 
 Because the descriptor declares `path = "mod/<mod-id>"`, the mod must be placed under the game's mod folder with the same relative layout. The application writes into `out/` relative to the working directory and does not install into the game folder.
 

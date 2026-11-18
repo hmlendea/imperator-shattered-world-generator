@@ -4,14 +4,9 @@ using ImperatorShatteredWorldGenerator.Configuration;
 
 namespace ImperatorShatteredWorldGenerator.Service
 {
-    public sealed class RandomNumberGenerator : IRandomNumberGenerator
+    public sealed class RandomNumberGenerator(GeneratorSettings settings) : IRandomNumberGenerator
     {
-        public Random Randomiser { get; }
-
-        public RandomNumberGenerator(GeneratorSettings settings)
-        {
-            Randomiser = new Random(settings.Seed);
-        }
+        public Random Randomiser { get; } = new Random(settings.Seed);
 
         public int Get(int min, int max)
         {

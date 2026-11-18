@@ -51,7 +51,7 @@ The same seed with the same game files and the same settings produces the same m
 | `out/shattered-world.mod` exists | Contains `name = "Shattered World"` and `path = "mod/shattered-world"` |
 | `out/shattered-world/descriptor.mod` exists | Identical content to the descriptor above |
 | `out/shattered-world/setup/provinces/02_shattered_world.txt` exists | One randomised block per habitable province |
-| `out/shattered-world/setup/main/02_shattered_world_countries.txt` exists | One `countries` block containing every vanilla country and every generated country |
+| `out/shattered-world/setup/main/00_default.txt` exists | One `countries` block containing every vanilla country and every generated country |
 | Process output | `Generating a shattered world using the seed '<seed>'...` then `Done!` |
 
 ## Common first-run problems

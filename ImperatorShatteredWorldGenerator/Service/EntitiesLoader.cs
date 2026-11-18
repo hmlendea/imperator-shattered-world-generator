@@ -14,19 +14,12 @@ using ImperatorShatteredWorldGenerator.Service.Models;
 
 namespace ImperatorShatteredWorldGenerator.Service
 {
-    public sealed class EntitiesLoader : IEntityLoader
+    public sealed class EntitiesLoader(GeneratorSettings settings) : IEntityLoader
     {
         const char ProvinceDefinitionSeparator = ';';
         const int ProvinceDefinitionFieldCount = 5;
 
         static readonly Regex AmountRegex = new("amount=([0-9]+)", RegexOptions.Compiled);
-
-        readonly GeneratorSettings settings;
-
-        public EntitiesLoader(GeneratorSettings settings)
-        {
-            this.settings = settings;
-        }
 
         public IEnumerable<City> LoadCities()
         {
@@ -119,11 +112,6 @@ namespace ImperatorShatteredWorldGenerator.Service
                 CapitalId = GetAttributeValue(blockContent, "capital"),
                 PreservedLines = GetPreservedCountryLines(blockContent)
             };
-
-            if (string.IsNullOrWhiteSpace(country.CapitalId))
-            {
-                return null;
-            }
 
             string centralisationLevel = GetAttributeValue(blockContent, "centralization");
 
@@ -474,7 +462,7 @@ namespace ImperatorShatteredWorldGenerator.Service
         {
             foreach (string line in blockContent)
             {
-                string trimmedLine = line.Trim();
+                string trimmedLine = ClausewitzText.StripComment(line).Trim();
                 int equalsIndex = trimmedLine.IndexOf('=');
 
                 if (equalsIndex <= 0)

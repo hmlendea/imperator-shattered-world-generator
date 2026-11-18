@@ -219,7 +219,7 @@ flowchart LR
     entityManager["EntityManager (City and Country dictionaries, id lists)"]
     generators["CityGenerator and CountryGenerator"]
     writer["ModWriter"]
-    modFiles["out/mod-id: setup/provinces, setup/countries, setup/main, localisation, events, defines, descriptor"]
+    modFiles["out/mod-id: setup/provinces, setup/countries, setup/main, localisation, events, descriptor"]
 
     provinces --> entityManager
     setup --> entityManager
@@ -315,7 +315,7 @@ sequenceDiagram
     Writer->>Disk: write setup/provinces
     Writer->>Manager: GetCountries()
     Writer->>Disk: write setup/countries files and index, localisation, setup/main
-    Writer->>Disk: write events and defines files
+    Writer->>Disk: write events file
 ```
 
 `CreateMod` prepares the directory structure, writes the mod descriptor to both the mod directory and the `<mod-id>.mod` path, and then writes each game file in a fixed order. Files that carry the game's non-ASCII identifiers are written as UTF-8; the remainder are written as plain text, and every file receives a leading and trailing newline normalisation.

@@ -98,7 +98,7 @@ Each habitable city is written as a province block in `out/<mod-id>/setup/provin
 | `out/<mod-id>/setup/countries/<Id>.txt` | `color = rgb { r g b }` from the three colour components plus a `ship_names` block from `ShipNames`, for generated countries only |
 | `out/<mod-id>/setup/countries/countries.txt` | Four fixed entries (`REB`, `PIR`, `BAR`, `MER`) plus one line per country (vanilla countries keep their original relative path) |
 | `out/<mod-id>/localization/english/SW_countries_l_english.yml` | One ` Id:0 "Name"` line per non-vanilla country |
-| `out/<mod-id>/setup/main/02_shattered_world_countries.txt` | One block per country with government, optional stance, culture, religion, optional centralisation, capital, preserved lines, and `own_control_core` |
+| `out/<mod-id>/setup/main/00_default.txt` | One block per country with government, optional stance, culture, religion, optional centralisation, capital, preserved lines, and `own_control_core` |
 
 ## Relationship model
 

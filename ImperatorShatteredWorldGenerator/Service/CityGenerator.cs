@@ -5,22 +5,11 @@ using ImperatorShatteredWorldGenerator.Service.Models;
 
 namespace ImperatorShatteredWorldGenerator.Service
 {
-    public sealed class CityGenerator : ICityGenerator
+    public sealed class CityGenerator(
+        IEntityManager entityManager,
+        IRandomNumberGenerator rng,
+        GeneratorSettings settings) : ICityGenerator
     {
-        readonly IEntityManager entityManager;
-        readonly IRandomNumberGenerator rng;
-        readonly GeneratorSettings settings;
-
-        public CityGenerator(
-            IEntityManager entityManager,
-            IRandomNumberGenerator rng,
-            GeneratorSettings settings)
-        {
-            this.entityManager = entityManager;
-            this.rng = rng;
-            this.settings = settings;
-        }
-
         public City GenerateCapital(Country country)
         {
             City city = GenerateCity(country.CapitalId);

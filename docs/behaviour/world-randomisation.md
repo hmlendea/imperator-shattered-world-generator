@@ -32,7 +32,7 @@ They remain in the `setup/provinces` files with randomised attributes but belong
 | Generated countries | `RandomCountriesCount` (default `500`) | Vacant habitable cities, one per distinct name |
 | Country files | One per country, vanilla and generated | `country.Id` |
 | Localisation entries | One per generated country | `country.Name` |
-| Event file | One | Fixed `grinsel.2` province event granting five slave pops |
+| Event file | One | Fixed `grinsel.2` country event granting five slave pops |
 | Defines file | One | Start date `450.10.1` |
 
 ## What is not changed
@@ -49,9 +49,9 @@ For a world with three vanilla countries and `--random-countries 2`:
 setup/provinces/02_shattered_world.txt -> every habitable province, randomised
 setup/countries/countries.txt -> REB, PIR, BAR, MER, <vanilla paths...>, <2 new ids>
 localization/english/SW_countries_l_english.yml -> l_english: + 2 entries
-setup/main/02_shattered_world_countries.txt -> vanilla countries with compatibility comments + 2 new countries
+setup/main/00_default.txt -> vanilla countries with compatibility comments + 2 new countries
 setup/countries/<id>.txt -> one per generated country, each with colour and ship names
-events/flavor_sel.txt, common/defines/00_defines.txt -> fixed content
+events/SW_events.txt -> fixed content
 ```
 
 ## Observable limits

@@ -304,6 +304,26 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
         }
 
         [Test]
+        public void GivenAVanillaCountryWithAnInlineCommentOnTheCapital_WhenLoadingCountries_ThenTheCommentIsNotPartOfTheCapitalId()
+        {
+            WriteVanillaCountryFiles();
+            gameDirectory.WriteFile(
+                "game/setup/main/00_default.txt",
+                "country = {\n" +
+                "\tcountries = {\n" +
+                "\t\tROM = {\n" +
+                "\t\t\tgovernment = aristocratic_republic\n" +
+                "\t\t\tcapital = 1 #Roma\n" +
+                "\t\t}\n" +
+                "\t}\n" +
+                "}\n");
+
+            List<Country> countries = [.. entitiesLoader.LoadCountries()];
+
+            Assert.That(countries[0].CapitalId, Is.EqualTo("1"));
+        }
+
+        [Test]
         public void GivenAVanillaCountry_WhenLoadingCountries_ThenNonManagedBlockLinesArePreserved()
         {
             WriteVanillaCountryFiles();
@@ -316,7 +336,7 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
         }
 
         [Test]
-        public void GivenAVanillaCountryWithoutACapital_WhenLoadingCountries_ThenItIsNotLoaded()
+        public void GivenAVanillaCountryWithoutACapital_WhenLoadingCountries_ThenItIsLoadedWithoutACapital()
         {
             gameDirectory.WriteFile("game/setup/countries/countries.txt", "ROM = \"setup/countries/italia/rome.txt\"\n");
             gameDirectory.WriteFile("game/setup/countries/italia/rome.txt", "color = rgb { 143  141  128 }\n");
@@ -326,7 +346,9 @@ namespace ImperatorShatteredWorldGenerator.IntegrationTests.Service
 
             List<Country> countries = [.. entitiesLoader.LoadCountries()];
 
-            Assert.That(countries, Is.Empty);
+            Assert.That(countries, Has.Count.EqualTo(1));
+            Assert.That(countries[0].Id, Is.EqualTo("ROM"));
+            Assert.That(countries[0].CapitalId, Is.Empty);
         }
 
         [Test]

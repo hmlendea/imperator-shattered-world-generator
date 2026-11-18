@@ -7,24 +7,13 @@ using ImperatorShatteredWorldGenerator.Service.Models;
 
 namespace ImperatorShatteredWorldGenerator.Service
 {
-    public sealed class CountryGenerator : ICountryGenerator
+    public sealed class CountryGenerator(
+        IEntityManager entityManager,
+        IRandomNumberGenerator rng,
+        GeneratorSettings settings) : ICountryGenerator
     {
-        readonly static string AllowedCapitalIdCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        readonly static string AllowedCapitalIdCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         readonly static string[] DisallowedCountryIds = { "REB", "PIR", "BAR", "MER" };
-
-        readonly IEntityManager entityManager;
-        readonly IRandomNumberGenerator rng;
-        readonly GeneratorSettings settings;
-
-        public CountryGenerator(
-            IEntityManager entityManager,
-            IRandomNumberGenerator rng,
-            GeneratorSettings settings)
-        {
-            this.entityManager = entityManager;
-            this.rng = rng;
-            this.settings = settings;
-        }
 
         public Country GenerateCountry(string capitalCityId)
         {
@@ -55,7 +44,7 @@ namespace ImperatorShatteredWorldGenerator.Service
                 .RemovePunctuation()
                 .Replace(" ", "")
                 .ToUpper();
-            
+
             string id = GenerateCapitalIdBasedOnName(name);
 
             if (id is null)
@@ -72,7 +61,7 @@ namespace ImperatorShatteredWorldGenerator.Service
                 .RemovePunctuation()
                 .Replace(" ", "")
                 .ToUpper();
-            
+
             if (normalisedName.Length < 3)
             {
                 return null;

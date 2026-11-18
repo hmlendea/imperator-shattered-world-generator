@@ -46,7 +46,7 @@
 | Symptom | Cause | Remedy |
 |---------|-------|--------|
 | Mod not listed | The descriptor is not in the game's mod directory, or `path` does not match the folder | Place `out/<mod-id>.mod` and `out/<mod-id>/` per the game's mod layout |
-| Game crashes at startup | Too many countries, or a malformed generated file | Reduce `--random-countries`; inspect `setup/main/02_shattered_world_countries.txt` and `setup/countries/countries.txt` |
+| Game crashes at startup | Too many countries, or a malformed generated file | Reduce `--random-countries`; inspect `setup/main/00_default.txt` and `setup/countries/countries.txt` |
 | Missing country names | Localisation only covers generated countries | Expected: vanilla names come from the base game |
 | Duplicate or blank names | A city with a blank `NameId` entered the pool | Should be prevented by `IsHabitable`; report a defect with the seed |
 | Country tags rejected after years | Vanilla countries were removed from a hand-edited setup | Do not remove vanilla countries; the generator never does |
@@ -60,5 +60,5 @@ Always capture the printed seed and the full command line. With both, plus the s
 The application emits two lines. To narrow a failure:
 1. Run with `--random-countries 0` to isolate loading and the city stage.
 2. Inspect `out/<mod-id>/setup/provinces/02_shattered_world.txt` to confirm the city stage produced data.
-3. Inspect `out/<mod-id>/setup/main/02_shattered_world_countries.txt` to confirm every country is present.
+3. Inspect `out/<mod-id>/setup/main/00_default.txt` to confirm every country is present.
 4. Set breakpoints using the table in [Startup and Generation](./flows/startup-and-generation.md#where-to-set-breakpoints).
